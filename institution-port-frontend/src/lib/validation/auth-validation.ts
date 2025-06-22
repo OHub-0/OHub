@@ -157,7 +157,6 @@ export const mobileLoginSchema = z
   .transform((data) => {
     const fullNumber = data.countryCode + data.phoneNumber
     const phoneNumber = parsePhoneNumberFromString(fullNumber)
-    console.log(phoneNumber)
     return {
       ...data,
       phoneNumber: phoneNumber ? phoneNumber.format("E.164") : fullNumber,   //phoneno is changed into e.164 format eg->+9779834302323

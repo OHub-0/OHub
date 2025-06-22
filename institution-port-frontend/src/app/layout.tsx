@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/navbar";
+import { Navbar } from "@/components/navbar/navbar";
 import { Lexend } from 'next/font/google';
 import Providers from "../context/provider";
 import "./globals.css";

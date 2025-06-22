@@ -32,3 +32,23 @@ export function useDebounce<T>(value: T, delay = 300): T {
   }, [value, delay])
   return debounced
 }
+
+
+
+export function setQueryParams(
+  params: Record<any, any>,
+): URLSearchParams {
+  const newSearchParams = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== "" && value !== null) {
+      if (Array.isArray(value)) {
+        if (value.length > 0) newSearchParams.set(key, value.join(","));
+      } else {
+        newSearchParams.set(key, value.toString());
+      }
+    }
+  })
+
+  return newSearchParams
+}

@@ -14,7 +14,6 @@ export const useLoginMutation = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
       const res = await fetch('/api/login', {

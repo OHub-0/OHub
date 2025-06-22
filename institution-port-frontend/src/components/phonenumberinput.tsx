@@ -8,9 +8,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Phone, Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils/basic-utils"
 import { countries } from "../data/countries"
 import type { Control, FieldErrors } from "react-hook-form"
+import { NationApiRespose, useNationQuery } from "@/lib/queries/nation-city"
 
 interface PhoneNumberInputProps {
   control: Control<any>
@@ -19,6 +20,7 @@ interface PhoneNumberInputProps {
 
 export function PhoneNumberInput({ control, errors }: PhoneNumberInputProps) {
   const [countryCodeOpen, setCountryCodeOpen] = useState(false)
+  const { data, isError, isLoading } = useNationQuery({ code: "true", flag: "true" })
 
   return (
     <div className="space-y-4">
@@ -30,24 +32,30 @@ export function PhoneNumberInput({ control, errors }: PhoneNumberInputProps) {
           render={({ field }) => (
             <FormItem className="w-28">
               <Popover open={countryCodeOpen} onOpenChange={setCountryCodeOpen}>
-                <PopoverTrigger asChild>
+                <PopoverTrigger disabled={isError || isLoading} asChild>
                   <FormControl>
                     <Button
                       variant="outline"
                       role="combobox"
                       className={cn(
                         "w-full justify-between",
-                        !field.value && "text-gray-400",
+                        !field.value && "text-gray-500",
                       )}
                     >
-                      {field.value ? (
-                        <div className="flex items-center gap-2">
-                          <span>{countries.find((c) => c.code === field.value)?.flag}</span>
-                          <span>{field.value}</span>
-                        </div>
-                      ) : (
-                        "Code"
-                      )}
+                      {
+                        isError ? (
+                          "Error"
+                        ) : isLoading ? (
+                          "Loading"
+                        ) :
+                          field.value && data ? (
+                            <div className="flex items-center gap-2">
+                              <span>{(data as NationApiRespose[]).find((c) => c.code === field.value)?.flag}</span>
+                              <span>{field.value}</span>
+                            </div>
+                          ) : (
+                            "Code"
+                          )}
                       <ChevronsUpDown className=" h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
@@ -59,9 +67,9 @@ export function PhoneNumberInput({ control, errors }: PhoneNumberInputProps) {
                     // className="text-white placeholder:text-gray-400"
                     />
                     <CommandList>
-                      <CommandEmpty className="">No country code found.</CommandEmpty>
+                      <CommandEmpty className="text-sm text-center p-2">No country code found</CommandEmpty>
                       <CommandGroup>
-                        {countries.map((country, index) => (
+                        {data && (data as NationApiRespose[]).map((country, index) => (
                           <CommandItem
                             value={`${country.name} ${country.code}`}
                             key={`${country.code}-${country.name}-${index}`}

@@ -1,6 +1,6 @@
 import { Search } from "lucide-react";
 import { Input } from "../ui/input";
-import { useDebounce } from "@/lib/utils";
+import { useDebounce } from "@/utils/basic-utils";
 import { useEffect, useState } from "react";
 
 export default function SearchBar(

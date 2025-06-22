@@ -45,7 +45,7 @@ export default function MultiSelectDropdown({
     <div className="space-y-2">
       <Label className="text-sm font-medium">{label}</Label>
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger className="cursor-default" asChild>
+        <PopoverTrigger className="cursor-pointer" asChild>
           <Button
             variant="outline"
             role="combobox"
@@ -54,19 +54,22 @@ export default function MultiSelectDropdown({
           >
             <div className="flex flex-wrap gap-1">
               {values.length === 0 ? (
+                //placeholder
                 <span className="text-muted-foreground">{placeholder}</span>
               ) : (
+                //when selected options
                 values.map((value) => {
                   const option = options.find((opt) => opt === value)
                   return (
-                    <Badge key={value} variant="secondary" className="gap-1 cursor-pointer">
+                    <Badge key={value} variant="secondary" className="gap-1 cursor-pointer hover:dark:bg-gray-900 hover:bg-white"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        removeValue(value)
+                      }}
+                    >
                       {option || value}
                       <X
                         className="h-3 w-3 cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          removeValue(value)
-                        }}
                       />
                     </Badge>
                   )
@@ -93,9 +96,9 @@ export default function MultiSelectDropdown({
               ) : (
                 <>
                   <CommandEmpty>No {label.toLowerCase()} found.</CommandEmpty>
-                  <CommandGroup className="max-h-64 overflow-auto">
+                  <CommandGroup className="max-h-64 overflow-auto ">
                     {options.map((data) => (
-                      <CommandItem key={data} onSelect={() => toggleOption(data)}>
+                      <CommandItem className="cursor-pointer" key={data} onSelect={() => toggleOption(data)}>
                         <Check
                           className={`mr-2 h-4 w-4 ${values.includes(data) ? "opacity-100" : "opacity-0"
                             }`}

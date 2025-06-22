@@ -2,7 +2,6 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,7 +14,7 @@ import Link from "next/link"
 import { PhoneNumberInput } from "@/components/phonenumberinput"
 import { useState } from "react"
 import { useLoginMutation } from "@/lib/queries/login"
-import { MobileLoginForm, mobileLoginSchema, UsernameLoginForm, usernameLoginSchema } from "@/lib/validation"
+import { MobileLoginForm, mobileLoginSchema, UsernameLoginForm, usernameLoginSchema } from "@/lib/validation/auth-validation"
 
 
 export default function LoginPage() {
@@ -143,7 +142,7 @@ export default function LoginPage() {
 
             <TabsContent value="mobile" className="space-y-4 mt-6">
               <Form {...mobileForm}>
-                <form onSubmit={mobileForm.handleSubmit((data) => idLoginMutation.mutate({ id: data.password, password: data.password, type: 'username' }))} className="space-y-4">
+                <form onSubmit={mobileForm.handleSubmit((data) => idLoginMutation.mutate({ id: data.phoneNumber, password: data.password, type: 'mobile' }))} className="space-y-4">
                   <PhoneNumberInput control={mobileForm.control} errors={mobileForm.formState.errors} />
                   <FormField
                     control={mobileForm.control}

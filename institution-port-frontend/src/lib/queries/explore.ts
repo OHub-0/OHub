@@ -1,42 +1,30 @@
-// // --- lib/api.ts ---
+import { ExploreFilters, ExploreMode, ExploreResponse } from "@/components/explore/explore-content"
+import { setQueryParams } from "@/utils/basic-utils"
+import { useQuery } from "@tanstack/react-query"
 
-// export function useInitialDataExplore() {
-//   return useQuery({
-//     queryKey: ["initialDataExplore"],
-//     queryFn: fetchInitialDataExplore,
-//   })
-// }
+export const useExploreFilterQuery = (mode: ExploreMode) => useQuery({
+  queryKey: ["filters", mode],
+  queryFn: async () => {
+    const response = await fetch(`/api/filters/${mode.toLowerCase()}`)
+    return response.json()
+  },
+  meta: { persist: true }
+})
+
+export const useExploreQuery = (filters: ExploreFilters) => useQuery<ExploreResponse, Error>({
+  queryKey: ["explore", filters],
+  queryFn: () => fetchExploreData(filters),
+  keepPreviousData: true
+
+} as any)
 
 
+export async function fetchExploreData(filters: ExploreFilters) {
+  const params = setQueryParams(filters)
 
-// export async function fetchInstitutions(filters: Record<string, any>) {
-//   const params = new URLSearchParams()
-//   for (const [key, value] of Object.entries(filters)) {
-//     if (value && value !== "All") {
-//       if (Array.isArray(value)) {
-//         params.append(key, value.join(","))
-//       } else {
-//         params.append(key, value)
-//       }
-//     }
-//   }
-//   const res = await fetch(`/api/explore?${params.toString()}`)
-//   if (!res.ok) throw new Error("Failed to fetch institutions")
-//   return res.json()
-// }
-
-// export async function fetchCitiesByNation(nation: string) {
-//   const res = await fetch("/api/explore", {
-//     method: "POST",
-//     body: JSON.stringify({ nation }),
-//     headers: { "Content-Type": "application/json" },
-//   })
-//   if (!res.ok) throw new Error("Failed to fetch cities")
-//   return res.json()
-// }
-
-// export async function fetchInitialDataExplore() {
-//   const res = await fetch("/api/explore?type=instituteTypes")
-//   if (!res.ok) throw new Error("Failed to fetch types")
-//   return res.json()
-// }
+  const response = await fetch(`/api/explore?${params.toString()}`, {
+    credentials: 'include',
+  })
+  if (!response.ok) throw new Error("Failed to fetch data")
+  return response.json()
+}

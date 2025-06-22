@@ -3,30 +3,33 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { parse } from "cookie";
 import { serialize } from "cookie";
 import { genAccessToken, genRefreshToken } from "@/utils/authtoken";
+import { cookies } from 'next/headers'
 
-type Payload = {
+export type Payload = {
   id: string
 }
 
 export async function GET(req: Request) {
   // Parse cookies from incoming headers
+
+  // const accessToken =await cookies().get('token')?.value;
+  // const refreshToken = cookies().get('refresh')?.value;
+
   const cookieHeader = req.headers.get("cookie") || "";
   const cookies = parse(cookieHeader);
 
   const accessToken = cookies.token;
   const refreshToken = cookies.refresh;
 
-  if (!accessToken || !refreshToken) {
-    return NextResponse.json({ message: "You are not logged in. Please login." }, { status: 401 });
-  }
-
   try {
     // Verify access token
-    const userPayload = jwt.verify(accessToken, process.env.JWT_SECRET!) as JwtPayload & Payload;
+    if (!accessToken) throw new Error('Access Token Not Found');
+    const userPayload = jwt.verify(accessToken, process.env.ACCESS_SECRET!) as JwtPayload & Payload;
     return NextResponse.json({ user: userPayload.id });
   } catch (err) {
     // If access token is invalid/expired, try refresh token
     try {
+      if (!refreshToken) throw new Error('Refresh Token Not Found');
       const refreshPayload = jwt.verify(refreshToken, process.env.REFRESH_SECRET!) as JwtPayload & Payload;
 
 
@@ -50,7 +53,7 @@ export async function GET(req: Request) {
 
       return response;
     } catch (refreshErr) {
-      return NextResponse.json({ message: "Session Expired, Login Again." }, { status: 401 });
+      return NextResponse.json({ message: "Not Logged In or Session Expired, Please Login Again." }, { status: 401 });
     }
   }
 }

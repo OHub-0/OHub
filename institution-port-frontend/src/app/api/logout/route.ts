@@ -5,7 +5,7 @@ export async function POST() {
   // Clear cookies
   const clearToken = serialize("token", "", {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: "strict",
     path: "/",
     maxAge: 0,
@@ -13,7 +13,7 @@ export async function POST() {
 
   const clearRefresh = serialize("refresh", "", {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: "strict",
     path: "/",
     maxAge: 0,

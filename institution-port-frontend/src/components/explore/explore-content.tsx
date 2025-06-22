@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -10,21 +10,24 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ChevronLeft, ChevronRight, Search, Filter, X } from "lucide-react"
-import FilterDropdown from "@/components/explore/filter-dropdown"
-import MultiSelectDropdown from "@/components/explore/multi-selector-dropdown"
+import FilterDropdown from "@/components/single-select-dropdown"
+import MultiSelectDropdown from "@/components/multi-select-dropdown"
 import ResultCard from "@/components/explore/result-card"
 import EmptyState from "@/components/explore/empty-state"
 import { Label } from "@/components/ui/label"
-import { useDebounce } from "@/lib/utils"
 import SearchBar from "./search-bar"
+import { setQueryParams } from "@/utils/basic-utils"
+import Pagination from "../pagination"
+import { useCityQuery, useNationQuery } from "@/lib/queries/nation-city"
+import { fetchExploreData, useExploreFilterQuery, useExploreQuery } from "@/lib/queries/explore"
 
-type ExploreMode = "Institution" | "Course" | "Form"
+export type ExploreMode = "Institution" | "Course" | "Form"
 
 type NationApiRes = {
   name: string
 }
 
-interface ExploreFilters {
+export interface ExploreFilters {
   mode: ExploreMode
   search?: string
   nation?: string
@@ -38,28 +41,34 @@ interface ExploreFilters {
   page: number
 }
 
-interface ExploreResult {
+export interface ExploreResult {
   id: string
   title: string
   subtitle?: string
   description: string
+  isFollowing?: boolean
   link: string
   image?: string
   badges: string[]
   metadata: Record<string, any>
 }
 
-interface ExploreResponse {
+export interface ExploreResponse {
   results: ExploreResult[]
   totalPages: number
   currentPage: number
   total: number
 }
 
+const Modes = ["Institution", "Course", "Form"]
+const DeliveryModes = ["Offline", "Online"]
+
+
 
 
 export default function ExploreContent() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const searchParams = useSearchParams()
 
   const [filters, setFilters] = useState<ExploreFilters>({
@@ -76,98 +85,35 @@ export default function ExploreContent() {
     page: Number.parseInt(searchParams.get("page") || "1"),
   })
 
-
-
-
   // Fetch nations
-  const { data: nations = [], isLoading: nationIsPending, isError: nationIsError } = useQuery<string[]>({
-    queryKey: ["nations"],
-    queryFn: async () => {
-      const response = await fetch("/api/nations")
-      const data = await response.json()
-      return data.map((i: NationApiRes) => i.name)
-    },
-  })
-
+  const { data: nations = [], isLoading: nationIsPending, isError: nationIsError } = useNationQuery({ code: "false", flag: "false" })
   // Fetch cities based on selected nation
-  const { data: cities = [], isLoading: citiesIsPending, isError: citiesIsError } = useQuery<string[]>({
-    queryKey: ["cities", filters.nation],
-    queryFn: async () => {
-      if (!filters.nation) return []
-      const response = await fetch('https://countriesnow.space/api/v0.1/countries/cities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          country: filters.nation
-        }),
-      })
-      const { data } = await response.json()
-      return data
-    },
-    enabled: !!filters.nation,
-  })
-
+  const { data: cities = [], isLoading: citiesIsPending, isError: citiesIsError } = useCityQuery(filters.nation)
   // Fetch mode-specific filters
-  const { data: modeFilters, isLoading: filterIsPending, isError: filterIsError } = useQuery({
-    queryKey: ["filters", filters.mode],
-    queryFn: async () => {
-      const response = await fetch(`/api/filters/${filters.mode.toLowerCase()}`)
-      return response.json()
-    },
-  })
+  const { data: modeFilters, isLoading: filterIsPending, isError: filterIsError } = useExploreFilterQuery(filters.mode)
 
   // Fetch explore results
-  const {
-    data: exploreData,
-    isLoading,
-    error,
-  } = useQuery<ExploreResponse>({
-    queryKey: ["explore", filters],
-    queryFn: async () => {
-      const params = new URLSearchParams()
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== "" && value !== null) {
-          if (Array.isArray(value)) {
-            if (value.length > 0) {
-              params.set(key, value.join(","))
-            }
-          } else {
-            params.set(key, value.toString())
-          }
-        }
-      })
+  const { data: exploreData, isLoading, error } = useExploreQuery(filters)
 
-      const response = await fetch(`/api/explore?${params.toString()}`)
-      if (!response.ok) throw new Error("Failed to fetch data")
-      return response.json()
-    },
 
-  })
-
-  // Update URL when filters change
   useEffect(() => {
-
-    const params = new URLSearchParams()
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== "" && value !== null) {
-        if (Array.isArray(value)) {
-          if (value.length > 0) {
-            params.set(key, value.join(","))
-          }
-        } else {
-          params.set(key, value.toString())
-        }
-      }
-    })
-
+    // Update URL when filters change
+    const params = setQueryParams(filters)
     router.push(`/explore?${params.toString()}`, { scroll: false })
-    // refetch()
-  }, [filters, router])
+    // prefetching next page
+    if (exploreData && exploreData.currentPage < exploreData.totalPages) {
+      const nextPageFilters = structuredClone({ ...filters, page: filters.page + 1 })
+      queryClient.prefetchQuery({
+        queryKey: ["explore", nextPageFilters],
+        queryFn: () => fetchExploreData(nextPageFilters),
+
+      });
+    }
+  }, [filters, router, queryClient, exploreData])
+
+
 
   const updateFilter = (key: keyof ExploreFilters, value: any) => {
-    // if (key === 'search') {
-    //   debounceForSearch.current = true
-    // }
     setFilters((prev) => ({
       ...prev,
       [key]: value,
@@ -204,7 +150,7 @@ export default function ExploreContent() {
       duration: undefined,
       deadline: undefined,
       programs: [],
-      sortBy: undefined,
+      sortBy: [],
       deliveryMode: undefined,
     })
   }
@@ -225,6 +171,8 @@ export default function ExploreContent() {
 
   return (
     <div className="space-y-6">
+
+
       {/* Filters */}
       <Card>
         <CardHeader>
@@ -247,13 +195,11 @@ export default function ExploreContent() {
             <div className="space-y-2">
               <Label className="text-sm font-medium">Explore Mode</Label>
               <Select value={filters.mode} onValueChange={(value: ExploreMode) => updateFilter("mode", value)}>
-                <SelectTrigger className={filterIsError ? "opacity-50" : ""}>
-                  <SelectValue placeholder={filterIsError ? "Error" : "Select Mode"} />
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Mode" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Institution">Institutions</SelectItem>
-                  <SelectItem value="Course">Courses</SelectItem>
-                  <SelectItem value="Form">Forms</SelectItem>
+                  {Modes.map((item) => <SelectItem className="cursor-pointer" key={item} value={item}>{item}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -276,7 +222,7 @@ export default function ExploreContent() {
                 value={filters.deliveryMode}
                 loading={filterIsPending}
                 error={filterIsError}
-                options={["Offline", "Online"]}
+                options={DeliveryModes}
                 onChange={(value) => updateFilter("deliveryMode", value)}
                 placeholder="Select mode"
               />
@@ -287,7 +233,7 @@ export default function ExploreContent() {
             <FilterDropdown
               label="Nation"
               value={filters.nation}
-              options={nations ?? []}
+              options={nations as string[] ?? []}
               loading={nationIsPending}
               error={nationIsError}
               onChange={(value) => updateFilter("nation", value)}
@@ -382,72 +328,72 @@ export default function ExploreContent() {
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2 pt-4 border-t">
               {filters.search && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => updateFilter("search", undefined)}>
                   Search: {filters.search}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("search", undefined)} />
+                  <X className="h-3 w-3" />
                 </Badge>
               )}
               {filters.deliveryMode && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => updateFilter("deliveryMode", undefined)}>
                   Mode: {filters.deliveryMode}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("deliveryMode", undefined)} />
+                  <X className="h-3 w-3" />
                 </Badge>
               )}
               {filters.nation && (
-                <Badge variant="secondary" className="gap-1">
-                  Nation: {nations.find((n) => n === filters.nation)}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("nation", undefined)} />
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => updateFilter("nation", undefined)}>
+                  Nation: {(nations as string[]).find((n) => n === filters.nation)}
+                  <X className="h-3 w-3" />
                 </Badge>
               )}
               {filters.city && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => updateFilter("city", undefined)}>
                   City: {cities.find((c) => c === filters.city)}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("city", undefined)} />
+                  <X className="h-3 w-3" />
                 </Badge>
               )}
               {filters.type && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => updateFilter("type", undefined)}>
                   Type: {filters.type}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("type", undefined)} />
+                  <X className="h-3 w-3" />
                 </Badge>
               )}
               {filters.duration && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => updateFilter("duration", undefined)}>
                   Duration: {filters.duration}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("duration", undefined)} />
+                  <X className="h-3 w-3" />
                 </Badge>
               )}
               {filters.deadline && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => updateFilter("deadline", undefined)}>
                   Deadline: {filters.deadline}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => updateFilter("deadline", undefined)} />
+                  <X className="h-3 w-3" />
                 </Badge>
               )}
               {filters.programs?.map((program) => (
-                <Badge key={program} variant="secondary" className="gap-1">
+                <Badge key={program} variant="secondary" className="gap-1 cursor-pointer"
+                  onClick={() =>
+                    updateFilter(
+                      "programs",
+                      filters.programs?.filter((p) => p !== program),
+                    )
+                  }>
                   {program}
                   <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() =>
-                      updateFilter(
-                        "programs",
-                        filters.programs?.filter((p) => p !== program),
-                      )
-                    }
+                    className="h-3 w-3"
                   />
                 </Badge>
               ))}
               {filters.sortBy?.map((sort) => (
-                <Badge key={sort} variant="secondary" className="gap-1">
-                  {sort}
+                <Badge key={sort} variant="secondary" className="gap-1 cursor-pointer"
+                  onClick={() =>
+                    updateFilter(
+                      "sortBy",
+                      filters.sortBy?.filter((p) => p !== sort),
+                    )
+                  }>
+                  SortBy: {sort}
                   <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() =>
-                      updateFilter(
-                        "sortBy",
-                        filters.sortBy?.filter((p) => p !== sort),
-                      )
-                    }
+                    className="h-3 w-3"
                   />
                 </Badge>
               ))}
@@ -456,7 +402,12 @@ export default function ExploreContent() {
         </CardContent>
       </Card>
 
-      {/* Results */}
+
+
+
+
+      {/* Results Section*/}
+
       <div className="space-y-4">
         {/* Results Header */}
         {exploreData && (
@@ -493,7 +444,7 @@ export default function ExploreContent() {
         {error && (
           <Card>
             <CardContent className="p-6 text-center">
-              <p className="text-destructive">Failed to load results. Please try again.</p>
+              <p className="text-red-500">Failed to load results. Please try again.</p>
             </CardContent>
           </Card>
         )}
@@ -507,55 +458,18 @@ export default function ExploreContent() {
         {exploreData && exploreData.results.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {exploreData.results.map((result) => (
-              <ResultCard key={result.id} result={result} mode={filters.mode} />
+              <ResultCard key={result.id} result={result} filter={filters} />
             ))}
           </div>
         )}
 
         {/* Pagination */}
-        {exploreData && exploreData.totalPages > 1 && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  onClick={() => updateFilter("page", Math.max(1, filters.page - 1))}
-                  disabled={filters.page <= 1}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Previous
-                </Button>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Page</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={exploreData.totalPages}
-                    value={filters.page}
-                    onChange={(e) => {
-                      const page = Number.parseInt(e.target.value)
-                      if (page >= 1 && page <= exploreData.totalPages) {
-                        updateFilter("page", page)
-                      }
-                    }}
-                    className="w-16 text-center"
-                  />
-                  <span className="text-sm text-muted-foreground">of {exploreData.totalPages}</span>
-                </div>
-
-                <Button
-                  variant="outline"
-                  onClick={() => updateFilter("page", Math.min(exploreData.totalPages, filters.page + 1))}
-                  disabled={filters.page >= exploreData.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {exploreData &&
+          <Pagination
+            currentPage={filters.page}
+            totalPages={exploreData.totalPages}
+            updatePage={(newPage: number) => updateFilter("page", newPage)}
+          />}
       </div>
     </div>
   )
