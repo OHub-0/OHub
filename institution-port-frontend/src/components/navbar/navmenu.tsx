@@ -15,8 +15,8 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useTheme } from "next-themes"
 import Link from "next/link"
-import { useLogoutMutation } from "@/lib/queries/logout"
-import { checkMe } from "@/lib/queries/checkme"
+import { useLogoutMutation } from "@/lib/queries/use-logout"
+import { checkMe } from "@/lib/queries/use-checkme"
 
 export function NavMenu() {
   const { data, status } = checkMe();

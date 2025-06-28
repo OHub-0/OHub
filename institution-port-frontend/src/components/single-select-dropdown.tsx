@@ -1,57 +1,3 @@
-// "use client"
-
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-// import { Label } from "@/components/ui/label"
-// import { CircleX, Loader2 } from "lucide-react"
-
-// interface FilterDropdownProps {
-//   label: string
-//   value?: string
-//   options: string[]
-//   onChange: (value: string | undefined) => void
-//   placeholder: string
-//   disabled?: boolean
-//   loading: boolean
-//   error: boolean
-// }
-
-// export default function FilterDropdown({
-//   label,
-//   value,
-//   options,
-//   onChange,
-//   placeholder,
-//   disabled = false,
-//   loading,
-//   error
-// }: FilterDropdownProps) {
-//   const dataError = options.length < 1
-//   return (
-//     <div className="space-y-2">
-//       <Label className="text-sm font-medium">{label}</Label>
-//       <Select
-//         value={value || ""}
-//         onValueChange={(val) => onChange((val === "" || val === "none") ? undefined : val)}
-//         disabled={disabled || loading || error || dataError}
-//       >
-//         <SelectTrigger className={(disabled || loading || dataError) ? "opacity-50" : ""}>
-//           <SelectValue placeholder={loading ? "Loading..." : error ? "Error" : placeholder} />
-//         </SelectTrigger>
-
-//         <SelectContent>
-//           <SelectItem value="none">{label}</SelectItem>
-//           {options.map((val) => (
-//             <SelectItem className="cursor-pointer" key={val} value={val}>
-//               {val}
-//             </SelectItem>
-//           ))}
-//         </SelectContent>
-//       </Select>
-//     </div>
-//   )
-// }
-
-
 "use client"
 
 import { useState } from "react"
@@ -70,6 +16,7 @@ import {
 
 interface SingleSelectDropdownProps {
   label: string
+  name?: string
   value?: string
   options: string[]
   loading: boolean
@@ -82,6 +29,7 @@ interface SingleSelectDropdownProps {
 export default function SingleSelectDropdown({
   label,
   value,
+  name,
   options,
   loading,
   error,
@@ -155,6 +103,53 @@ export default function SingleSelectDropdown({
           </Command>
         </PopoverContent>
       </Popover>
+      {/* Expose value to HTML form / RHF */}
+      {name && value !== undefined && (
+        <input type="hidden" name={name} value={value} />
+      )}
     </div>
   )
 }
+
+
+// Usage in a React Hook Form parent component:
+
+// import { Controller, useForm, FormProvider } from "react-hook-form"
+// import SelectLocation from "@/components/select-location"
+
+// type FormData = {
+//   location: {
+//     nation?: string
+//     city?: string
+//   }
+// }
+
+// export default function MyForm() {
+//   const methods = useForm<FormData>()
+//   const { control, watch, setValue, handleSubmit } = methods
+
+//   const location = watch("location")
+
+//   return (
+//     <FormProvider {...methods}>
+//       <form onSubmit={handleSubmit((data) => console.log(data))}>
+//         <Controller
+//           control={control}
+//           name="location"
+//           render={({ field }) => (
+//             <SelectLocation
+//               nation={field.value?.nation}
+//               city={field.value?.city}
+//               onChange={(key, value) =>
+//                 field.onChange({ ...field.value, [key]: value })
+//               }
+//             />
+//           )}
+//         />
+
+//         <button type="submit">Submit</button>
+//       </form>
+//     </FormProvider>
+
+//   )
+// }

@@ -4,7 +4,7 @@ import { Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { useFollow, useUnfollow } from "@/lib/queries/follow"
+import { useFollow, useUnfollow } from "@/lib/queries/use-follow"
 import { ExploreFilters } from "./explore/explore-content"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 

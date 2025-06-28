@@ -1,6 +1,6 @@
 'use client'
 import { HeroSection } from "@/components/homepage/herosection";
-import { checkMe } from "@/lib/queries/checkme";
+import { checkMe } from "@/lib/queries/use-checkme";
 
 
 export default function Home() {

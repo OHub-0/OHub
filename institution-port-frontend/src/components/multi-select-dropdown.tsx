@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 
 interface MultiSelectDropdownProps {
   label: string
+  name?: string
   values: string[]
   options: string[]
   loading: boolean
@@ -22,6 +23,7 @@ interface MultiSelectDropdownProps {
 export default function MultiSelectDropdown({
   label,
   values,
+  name,
   options,
   loading,
   error,
@@ -113,6 +115,51 @@ export default function MultiSelectDropdown({
           </Command>
         </PopoverContent>
       </Popover>
+      {/* Expose value to HTML form / RHF */}
+      {name && values.length > 0 && (
+        <input type="hidden" name={name} value={JSON.stringify(values)} />
+      )}
     </div >
   )
 }
+//use in rfh example
+// import { useForm, Controller } from "react-hook-form"
+// import MultiSelectDropdown from "@/components/MultiSelectDropdown"
+
+// const options = ["Engineering", "Medical", "Business", "Law", "Arts"]
+
+// export default function MyFormComponent() {
+//   const { control, handleSubmit } = useForm({
+//     defaultValues: {
+//       interests: [],
+//     },
+//   })
+
+//   const onSubmit = (data: any) => {
+//     console.log("Form submitted with:", data)
+//   }
+
+//   return (
+//     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+//       <Controller
+//         name="interests"
+//         control={control}
+//         render={({ field }) => (
+//           <MultiSelectDropdown
+//             label="Interests"
+//             name={field.name}
+//             values={field.value}
+//             options={options}
+//             onChange={field.onChange}
+//             loading={false}
+//             error={false}
+//             placeholder="Select your interests"
+//           />
+//         )}
+//       />
+
+//       <button type="submit">Submit</button>
+//     </form>
+//   )
+// }
+

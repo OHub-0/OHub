@@ -13,43 +13,47 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { AlertCircle, Building2, Eye, EyeOff, Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/utils/basic-utils"
-import { countries } from "@/data/countries"
 import { PhoneNumberInput } from "@/components/phonenumberinput"
 import { SignUpForm, signUpSchema } from "@/lib/validation/auth-validation"
 import Link from "next/link"
-import useSignUpMutation from "@/lib/queries/signup"
+import { SignUpCredentials, useSignUpMutation } from "@/lib/queries/use-signup"
+import { useNationQuery } from "@/lib/queries/use-nation-city"
+import { FullNationApiResponse } from "@/utils/types"
 
 
 export default function SignUpPage() {
   const signUpMutation = useSignUpMutation();
+  const { data: nationQuery, isError: nationQueryIsError, isLoading: nationQueryIsLoading } = useNationQuery({ code: "true", flag: "true" })
+  const nationData: FullNationApiResponse[] = nationQuery?.data?.nations
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [countryOpen, setCountryOpen] = useState(false)
 
-  const form = useForm<SignUpForm>({
+  const signupForm = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      firstName: "",
-      middleName: "",
-      lastName: "",
+      officialName: {
+        firstName: "",
+        middleName: "",
+        lastName: "",
+      },
       username: "",
       country: "",
-      countryCode: "",
-      phoneNumber: "",
+      mobile: {
+        countryCode: "",
+        number: "",
+      },
       password: "",
       confirmPassword: "",
     },
   })
 
   function onSubmit(values: SignUpForm) {
-    const fullPhoneNumber = values.countryCode + values.phoneNumber;
-
-    const { countryCode, phoneNumber, confirmPassword, ...rest } = values;
-
+    const { officialName, username, country, mobile, password } = values
+    const fullMobileNo = `${mobile.countryCode}${mobile.number}`
     // Send cleaned + combined payload
     signUpMutation.mutate({
-      ...rest,
-      phoneNumber: fullPhoneNumber,
+      officialName: officialName, username: username, country: country, mobile: fullMobileNo, password: password
     });
   }
 
@@ -68,23 +72,18 @@ export default function SignUpPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {signUpMutation.error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="pt-1">{signUpMutation.error.message}</AlertDescription>
-            </Alert>
-          )}
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+          <Form {...signupForm}>
+            <form onSubmit={signupForm.handleSubmit(onSubmit)} className="space-y-6">
               {/* Name Fields */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
-                  control={form.control}
-                  name="firstName"
+                  control={signupForm.control}
+                  name="officialName.firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel >First Name *</FormLabel>
+                      <FormLabel>First Name *</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="John"
@@ -96,8 +95,8 @@ export default function SignUpPage() {
                   )}
                 />
                 <FormField
-                  control={form.control}
-                  name="middleName"
+                  control={signupForm.control}
+                  name="officialName.middleName"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Middle Name</FormLabel>
@@ -112,8 +111,8 @@ export default function SignUpPage() {
                   )}
                 />
                 <FormField
-                  control={form.control}
-                  name="lastName"
+                  control={signupForm.control}
+                  name="officialName.lastName"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Last Name *</FormLabel>
@@ -131,7 +130,7 @@ export default function SignUpPage() {
 
               {/* Username */}
               <FormField
-                control={form.control}
+                control={signupForm.control}
                 name="username"
                 render={({ field }) => (
                   <FormItem>
@@ -149,7 +148,7 @@ export default function SignUpPage() {
 
               {/* Country */}
               <FormField
-                control={form.control}
+                control={signupForm.control}
                 name="country"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
@@ -165,9 +164,9 @@ export default function SignUpPage() {
                               !field.value && "text-gray-400",
                             )}
                           >
-                            {field.value ? (
+                            {field.value && nationData ? (
                               <div className="flex items-center gap-2">
-                                <span>{countries.find((c) => c.name === field.value)?.flag}</span>
+                                <span>{nationData.find((c) => c.name === field.value)?.flag}</span>
                                 <span>{field.value}</span>
                               </div>
                             ) : (
@@ -184,12 +183,12 @@ export default function SignUpPage() {
                           <CommandList>
                             <CommandEmpty>No country found.</CommandEmpty>
                             <CommandGroup>
-                              {countries.map((country) => (
+                              {nationData && nationData.map((country) => (
                                 <CommandItem
                                   value={country.name}
                                   key={country.name}
                                   onSelect={() => {
-                                    form.setValue("country", country.name)
+                                    signupForm.setValue("country", country.name)
                                     setCountryOpen(false)
                                   }}
                                 >
@@ -216,12 +215,17 @@ export default function SignUpPage() {
               />
 
               {/* Phone Number Component */}
-              <PhoneNumberInput control={form.control} errors={form.formState.errors} />
+              <PhoneNumberInput
+                nationData={nationData}
+                isLoading={nationQueryIsLoading}
+                isError={nationQueryIsError}
+                form={signupForm}
+              />
 
               {/* Password Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
-                  control={form.control}
+                  control={signupForm.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
@@ -250,7 +254,7 @@ export default function SignUpPage() {
                   )}
                 />
                 <FormField
-                  control={form.control}
+                  control={signupForm.control}
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
@@ -283,6 +287,12 @@ export default function SignUpPage() {
               <Button type="submit" className="w-full" disabled={signUpMutation.isPending}>
                 {signUpMutation.isPending ? "Creating Account..." : "Create Account"}
               </Button>
+              {signUpMutation.error && (
+                <Alert variant="destructive" className="mt-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="pt-1">{signUpMutation.error.message}</AlertDescription>
+                </Alert>
+              )}
             </form>
           </Form>
 

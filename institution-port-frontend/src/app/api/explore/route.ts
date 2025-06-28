@@ -2,7 +2,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
 import { parse } from "cookie"
-import { checkUserIsValid } from "@/utils/authtoken"
+import { checkTokenIsValid } from "@/utils/authtoken"
+import { genApiResponse } from "@/utils/gen-api-response"
 
 
 
@@ -226,85 +227,97 @@ const mockForms = [
 
 // Secret to verify token (must match your login token signing)
 
+const ACCESS_SECRET = process.env.ACCESS_SECRET
 
 export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const mode = searchParams.get("mode")?.toLowerCase() || "institution"
+    const page = Number.parseInt(searchParams.get("page") || "1")
+    const pageSize = 6
 
-  const searchParams = request.nextUrl.searchParams
-  const mode = searchParams.get("mode")?.toLowerCase() || "institution"
-  const page = Number.parseInt(searchParams.get("page") || "1")
-  const pageSize = 6
+    let data: any[] = []
+    switch (mode) {
+      case "institution":
+        data = mockInstitutions
+        break
+      case "course":
+        data = mockCourses
+        break
+      case "form":
+        data = mockForms
+        break
+    }
 
-  let data: any[] = []
-  switch (mode) {
-    case "institution":
-      data = mockInstitutions
-      break
-    case "course":
-      data = mockCourses
-      break
-    case "form":
-      data = mockForms
-      break
+    // Filtering
+    const user = checkTokenIsValid(request, "access-token", ACCESS_SECRET!)
+    const search = searchParams.get("search")?.toLowerCase() || undefined
+    const type = searchParams.get("type")?.toLowerCase() || undefined
+    const duration = searchParams.get("duration")?.toLowerCase() || undefined
+    const deliveryMode = searchParams.get("deliveryMode")?.toLowerCase() || undefined
+    const nation = searchParams.get("nation")?.toLowerCase() || undefined
+    const city = searchParams.get("city")?.toLowerCase() || undefined
+    const deadline = searchParams.get("deadline")?.toLowerCase() || undefined
+    const programs = searchParams.get("programs")?.split(",").filter(Boolean) || undefined
+    const sortBy = searchParams.get("sortBy")?.split(",").filter(Boolean) || undefined
+    const isLocationDisabled = ((mode === "course" || mode === "form") && deliveryMode === "online")
+    //this is not working make a real filter with above data and db
+    if (search) {
+      data = data.filter(item =>
+        item.title.toLowerCase().includes(search) ||
+        item.subtitle?.toLowerCase().includes(search) ||
+        item.description.toLowerCase().includes(search)
+      )
+    }
+
+    if (nation && nation !== "nepal" && !isLocationDisabled) {
+      data = []
+    }
+
+    if (type) {
+      data = data.filter(item =>
+        item.metadata.type?.toLowerCase().includes(type) ||
+        item.badges.some((b: string) => b.toLowerCase().includes(type))
+      )
+    }
+
+    if (duration) {
+      data = data.filter(item => item.metadata.duration?.toLowerCase().includes(duration))
+    }
+
+    if (deliveryMode) {
+      data = data.filter(item => item.metadata.deliveryMode === deliveryMode)
+    }
+
+    // Pagination
+    const startIndex = (page - 1) * pageSize
+    const paginatedData = data.slice(startIndex, startIndex + pageSize)
+    const totalPages = Math.ceil(data.length / pageSize)
+
+    // ✅ Conditionally append `isFollowing` if user exists
+    const enrichedData = paginatedData.map(item => {
+      if (!user) return item
+
+      // 🧠 Example logic: user follows items with even IDs
+      const isFollowing = item.id === "1" || item.id === "1234"
+      return { ...item, isFollowing }
+    })
+    return genApiResponse({
+      code: "FETCHED",
+      message: `Successfully fetch the ${mode} data.`,
+      data: {
+        results: enrichedData,
+        currentPage: page,
+        totalPages,
+        total: data.length,
+      },
+      status: 400,
+    })
+  } catch (err) {
+    return genApiResponse({
+      code: "FETCH_FAILED",
+      message: "Sorry, faild to fetch the data. Server Error.",
+      status: 500,
+    })
   }
-
-  // Filtering
-  const user = checkUserIsValid(request)
-  const search = searchParams.get("search")?.toLowerCase() || undefined
-  const type = searchParams.get("type")?.toLowerCase() || undefined
-  const duration = searchParams.get("duration")?.toLowerCase() || undefined
-  const deliveryMode = searchParams.get("deliveryMode")?.toLowerCase() || undefined
-  const nation = searchParams.get("nation")?.toLowerCase() || undefined
-  const city = searchParams.get("city")?.toLowerCase() || undefined
-  const deadline = searchParams.get("deadline")?.toLowerCase() || undefined
-  const programs = searchParams.get("programs")?.split(",").filter(Boolean) || undefined
-  const sortBy = searchParams.get("sortBy")?.split(",").filter(Boolean) || undefined
-  const isLocationDisabled = ((mode === "course" || mode === "form") && deliveryMode === "online")
-  //this is not working make a real filter with above data and db
-  if (search) {
-    data = data.filter(item =>
-      item.title.toLowerCase().includes(search) ||
-      item.subtitle?.toLowerCase().includes(search) ||
-      item.description.toLowerCase().includes(search)
-    )
-  }
-
-  if (nation && nation !== "nepal" && !isLocationDisabled) {
-    data = []
-  }
-
-  if (type) {
-    data = data.filter(item =>
-      item.metadata.type?.toLowerCase().includes(type) ||
-      item.badges.some((b: string) => b.toLowerCase().includes(type))
-    )
-  }
-
-  if (duration) {
-    data = data.filter(item => item.metadata.duration?.toLowerCase().includes(duration))
-  }
-
-  if (deliveryMode) {
-    data = data.filter(item => item.metadata.deliveryMode === deliveryMode)
-  }
-
-  // Pagination
-  const startIndex = (page - 1) * pageSize
-  const paginatedData = data.slice(startIndex, startIndex + pageSize)
-  const totalPages = Math.ceil(data.length / pageSize)
-
-  // ✅ Conditionally append `isFollowing` if user exists
-  const enrichedData = paginatedData.map(item => {
-    if (!user) return item
-
-    // 🧠 Example logic: user follows items with even IDs
-    const isFollowing = item.id === "1" || item.id === "1234"
-    return { ...item, isFollowing }
-  })
-
-  return NextResponse.json({
-    results: enrichedData,
-    currentPage: page,
-    totalPages,
-    total: data.length,
-  })
 }

@@ -1,59 +1,59 @@
-import { NextResponse } from "next/server";
-import jwt, { JwtPayload } from "jsonwebtoken";
-import { parse } from "cookie";
-import { serialize } from "cookie";
-import { genAccessToken, genRefreshToken } from "@/utils/authtoken";
-import { cookies } from 'next/headers'
+import { NextRequest, NextResponse } from "next/server";
+import { checkTokenIsValid, genToken } from "@/utils/authtoken";
+import { genApiResponse } from "@/utils/gen-api-response"
+import { v4 as _uuidv4, UUIDTypes } from 'uuid'
 
-export type Payload = {
-  id: string
-}
 
-export async function GET(req: Request) {
-  // Parse cookies from incoming headers
 
-  // const accessToken =await cookies().get('token')?.value;
-  // const refreshToken = cookies().get('refresh')?.value;
+const ACCESS_SECRET = process.env.ACCESS_SECRET
+const REFRESH_SECRET = process.env.REFRESH_SECRET
 
-  const cookieHeader = req.headers.get("cookie") || "";
-  const cookies = parse(cookieHeader);
 
-  const accessToken = cookies.token;
-  const refreshToken = cookies.refresh;
 
+export async function GET(req: NextRequest) {
+  function successfulAuth(userDetails: { user: string, id: UUIDTypes }) {
+    return genApiResponse({
+      code: "AUTH_SUCCESS",
+      message: "You are authenticated successfully.",
+      data: userDetails,
+      status: 200,
+    })
+  }
   try {
-    // Verify access token
-    if (!accessToken) throw new Error('Access Token Not Found');
-    const userPayload = jwt.verify(accessToken, process.env.ACCESS_SECRET!) as JwtPayload & Payload;
-    return NextResponse.json({ user: userPayload.id });
-  } catch (err) {
-    // If access token is invalid/expired, try refresh token
-    try {
-      if (!refreshToken) throw new Error('Refresh Token Not Found');
-      const refreshPayload = jwt.verify(refreshToken, process.env.REFRESH_SECRET!) as JwtPayload & Payload;
-
-
-      // Set new access token cookie
-      const response = NextResponse.json({ user: refreshPayload.id });
-      const accessCookie = genAccessToken({ id: refreshPayload.id });
+    //otp token verification
+    const accessTokenPayload = checkTokenIsValid(req, "access-token", ACCESS_SECRET!)
+    const refreshTokenPayload = checkTokenIsValid(req, "refresh-token", ACCESS_SECRET!)
+    if (accessTokenPayload) return successfulAuth({ user: accessTokenPayload.user as any, id: accessTokenPayload.id })
+    if (refreshTokenPayload) {
+      //get the user's unique immutable id
+      const uuid = _uuidv4();
+      const user = refreshTokenPayload.user as any
+      const accessCookie = genToken({ user: user, id: uuid }, "access-token", 18000, ACCESS_SECRET!);
+      const response = successfulAuth({ user: user, id: refreshTokenPayload.id })
       response.headers.append("Set-Cookie", accessCookie);
-
-
-
-
       // Optionally refresh the refresh token if it's expiring soon (within 2 days)
-      const expMs = (refreshPayload.exp ?? 0) * 1000;
+      const expMs = (refreshTokenPayload.exp ?? 0) * 1000;
       const now = Date.now();
       const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
-
       if (expMs - now < twoDaysMs) {
-        const refreshCookie = genRefreshToken({ id: refreshPayload.id });
+        const refreshCookie = genToken({ user: user, id: uuid }, "refresh-token", 1209600, REFRESH_SECRET!);
         response.headers.append("Set-Cookie", refreshCookie);
       }
-
-      return response;
-    } catch (refreshErr) {
-      return NextResponse.json({ message: "Not Logged In or Session Expired, Please Login Again." }, { status: 401 });
+      return response
     }
+    //failed
+    return genApiResponse({
+      code: "AUTH_FAILED",
+      message: "You are Unauthenticated, Please Login.",
+      status: 401,
+    })
+
+  } catch (err) {
+    return genApiResponse({
+      code: "AUTH_FAILED",
+      message: "Sorry, Something went wrong in the server.",
+      status: 500,
+    })
   }
 }
+

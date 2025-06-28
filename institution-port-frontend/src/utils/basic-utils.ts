@@ -1,6 +1,11 @@
+'use client'
+
 import { clsx, type ClassValue } from "clsx"
+import { NextResponse } from "next/server";
 import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge"
+import { ERROR_API_RESPONSE, SelfThrownError, SUCCESS_API_RESPONSE, SUCCESS_RESPONSE } from "./types";
+import { toast } from "sonner";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -24,6 +29,7 @@ export function capitalizeSentence(sentence: string): string {
     .join(" ");
 }
 
+
 export function useDebounce<T>(value: T, delay = 300): T {
   const [debounced, setDebounced] = useState(value)
   useEffect(() => {
@@ -32,7 +38,6 @@ export function useDebounce<T>(value: T, delay = 300): T {
   }, [value, delay])
   return debounced
 }
-
 
 
 export function setQueryParams(
@@ -51,4 +56,60 @@ export function setQueryParams(
   })
 
   return newSearchParams
+}
+
+
+
+export async function apiResponseHandler(res: Response): Promise<SUCCESS_RESPONSE> {
+  const body = await res.json()
+  if (!res.ok || body.error) {
+    throw {
+      name: 'SelfThrownError',
+      message: body.error?.message ?? 'Something went wrong',
+      code: body.error?.code ?? 'UNKNOWN_ERROR',
+      metaData: body.error?.metaData ?? null,
+      status: res.status,
+    } satisfies SelfThrownError
+  }
+
+  return body.success
+}
+export function isSelfThrownApiError(error: unknown): error is SelfThrownError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    (error as any).name === 'SelfThrownError' &&
+    'code' in error &&
+    'message' in error &&
+    'status' in error
+  )
+}
+export function handleApiError(err: any, fallback = "Sorry, something went wrong"): never {
+  if (isSelfThrownApiError(err)) {
+    toast.error(err.message || fallback)
+    console.error(`[${err.status}] ${err.code}:`, err.metaData)
+    throw err;
+  }
+  //if not api error, we will create our own error to thrown so we can use it properly in frontend
+  if (err instanceof Error) {
+    toast.error(fallback)
+    console.error("Unknown error:", err.message)
+    throw {
+      name: "SelfThrownError",
+      message: "Unkonwn Error",
+      code: "UNKNOWN_ERROR",
+      metaData: null,
+      status: 500
+    } satisfies SelfThrownError;
+  }
+  toast.error(fallback)
+  console.error("Unrecognized error:", err)
+  throw {
+    name: "SelfThrownError",
+    message: "Unhandled error",
+    code: "UNKNOWN_ERROR",
+    metaData: null,
+    status: 500
+  } satisfies SelfThrownError;
 }

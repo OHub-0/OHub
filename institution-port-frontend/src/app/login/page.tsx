@@ -13,12 +13,16 @@ import { Building2, Loader2, Eye, EyeOff, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { PhoneNumberInput } from "@/components/phonenumberinput"
 import { useState } from "react"
-import { useLoginMutation } from "@/lib/queries/login"
+import { useLoginMutation } from "@/lib/queries/use-login"
 import { MobileLoginForm, mobileLoginSchema, UsernameLoginForm, usernameLoginSchema } from "@/lib/validation/auth-validation"
+import { FullNationApiResponse } from "@/utils/types"
+import { useNationQuery } from "@/lib/queries/use-nation-city"
 
 
 export default function LoginPage() {
   const idLoginMutation = useLoginMutation()
+  const { data: nationQuery, isError: nationQueryIsError, isLoading: nationQueryIsLoading } = useNationQuery({ code: "true", flag: "true" })
+  const nationData: FullNationApiResponse[] = nationQuery?.data?.nations
   const [showPassword, setShowPassword] = useState(false)
   const [showMobilePassword, setShowMobilePassword] = useState(false)
 
@@ -35,8 +39,10 @@ export default function LoginPage() {
   const mobileForm = useForm<MobileLoginForm>({
     resolver: zodResolver(mobileLoginSchema),
     defaultValues: {
-      countryCode: "",
-      phoneNumber: "",
+      mobile: {
+        countryCode: "+977",
+        number: ""
+      },
       password: "",
     },
   })
@@ -53,13 +59,6 @@ export default function LoginPage() {
           <CardDescription>Log in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent>
-          {idLoginMutation.error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="pt-1">{idLoginMutation.error.message}</AlertDescription>
-            </Alert>
-          )}
-
           <Tabs defaultValue="username" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger
@@ -142,8 +141,19 @@ export default function LoginPage() {
 
             <TabsContent value="mobile" className="space-y-4 mt-6">
               <Form {...mobileForm}>
-                <form onSubmit={mobileForm.handleSubmit((data) => idLoginMutation.mutate({ id: data.phoneNumber, password: data.password, type: 'mobile' }))} className="space-y-4">
-                  <PhoneNumberInput control={mobileForm.control} errors={mobileForm.formState.errors} />
+                <form onSubmit={mobileForm.handleSubmit((data) =>
+                  idLoginMutation.mutate({
+                    id: `${data.mobile.countryCode}${data.mobile.number}`, // Properly concatenate the full number
+                    password: data.password,
+                    type: 'mobile'
+                  }))} className="space-y-4">
+                  {/* Phone Number Component */}
+                  <PhoneNumberInput
+                    nationData={nationData}
+                    isLoading={nationQueryIsLoading}
+                    isError={nationQueryIsError}
+                    control={mobileForm.control} errors={mobileForm.formState.errors} />
+                  {/* continue */}
                   <FormField
                     control={mobileForm.control}
                     name="password"
@@ -191,7 +201,14 @@ export default function LoginPage() {
               </Form>
             </TabsContent>
           </Tabs>
-
+          {/* mutation error */}
+          {idLoginMutation.error && (
+            <Alert variant="destructive" className="mt-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="pt-1">{idLoginMutation.error.message ?? "Something went wrong, Retry."}</AlertDescription>
+            </Alert>
+          )}
+          {/* signup and password forgot optoons */}
           <div className="mt-6">
             <Separator className="my-4" />
             <div className="text-center space-y-2 text-xs">

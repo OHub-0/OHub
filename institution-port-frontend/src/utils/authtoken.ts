@@ -1,59 +1,43 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { parse, serialize } from "cookie";
 import { NextRequest } from "next/server";
-
-const ACCESS_SECRET = process.env.ACCESS_SECRET
-const REFRESH_SECRET = process.env.REFRESH_SECRET
+import { OtpTokenPayload, SessionTokenPayload } from "./types";
 
 
-export function genAccessToken(payload: { id: string }) {
+
+
+export function genToken(payload: SessionTokenPayload | OtpTokenPayload, name: string, time: number, secret: string) {
   // Tokens
-  const accessToken = jwt.sign(payload, ACCESS_SECRET!, {
-    expiresIn: '1800s' //30m
+  const token = jwt.sign(payload, secret, {
+    expiresIn: time
   });
 
 
   // Set cookies
-  const accessCookie = serialize("token", accessToken, {
+  const cookie = serialize(name, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: "strict",
     path: "/",
-    maxAge: 1800, // 30m
+    maxAge: time,
   });
-  return accessCookie;
+  return cookie;
 
-}
-export function genRefreshToken(payload: { id: string }) {
-
-  const refreshToken = jwt.sign(payload, REFRESH_SECRET!, {
-    expiresIn: '1209600s', // 14d
-  });
-  const refreshCookie = serialize("refresh", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: "strict",
-    path: "/",
-    maxAge: 1209600, // 14d
-  });
-
-
-  return refreshCookie;
 }
 
 
 
-export function checkUserIsValid(req: NextRequest) {
+export function checkTokenIsValid(req: NextRequest, tokenName: string, secret: string): null | OtpTokenPayload | SessionTokenPayload {
   try {
     const cookieHeader = req.headers.get("cookie")
     if (!cookieHeader) return null
 
     const cookies = parse(cookieHeader)
-    const token = cookies["token"]
+    const token = cookies[tokenName]
     if (!token) return null
 
-    const decoded = jwt.verify(token, ACCESS_SECRET!)
-    return decoded // should include user id, username, etc.
+    const decoded = jwt.verify(token, secret) //this gives new Error or a payload{}
+    return decoded as OtpTokenPayload | SessionTokenPayload // should include user id, username, etc.
   } catch (err) {
     return null
   }

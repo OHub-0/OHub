@@ -18,8 +18,9 @@ import { Label } from "@/components/ui/label"
 import SearchBar from "./search-bar"
 import { setQueryParams } from "@/utils/basic-utils"
 import Pagination from "../pagination"
-import { useCityQuery, useNationQuery } from "@/lib/queries/nation-city"
-import { fetchExploreData, useExploreFilterQuery, useExploreQuery } from "@/lib/queries/explore"
+import { useCityQuery, useNationQuery } from "@/lib/queries/use-nation-city"
+import { fetchExploreData, useExploreFilterQuery, useExploreQuery } from "@/lib/queries/use-explore"
+import SelectLocation from "../select-location"
 
 export type ExploreMode = "Institution" | "Course" | "Form"
 
@@ -85,10 +86,7 @@ export default function ExploreContent() {
     page: Number.parseInt(searchParams.get("page") || "1"),
   })
 
-  // Fetch nations
-  const { data: nations = [], isLoading: nationIsPending, isError: nationIsError } = useNationQuery({ code: "false", flag: "false" })
-  // Fetch cities based on selected nation
-  const { data: cities = [], isLoading: citiesIsPending, isError: citiesIsError } = useCityQuery(filters.nation)
+
   // Fetch mode-specific filters
   const { data: modeFilters, isLoading: filterIsPending, isError: filterIsError } = useExploreFilterQuery(filters.mode)
 
@@ -230,28 +228,14 @@ export default function ExploreContent() {
 
 
             {/* Nation Filter */}
-            <FilterDropdown
-              label="Nation"
-              value={filters.nation}
-              options={nations as string[] ?? []}
-              loading={nationIsPending}
-              error={nationIsError}
-              onChange={(value) => updateFilter("nation", value)}
-              placeholder="Select nation"
+            <SelectLocation
+              nation={filters.nation}
+              city={filters.city}
+              onChange={(field: "nation" | "city", value: string | undefined) => updateFilter(field, value)}
               disabled={isLocationDisabled}
             />
 
-            {/* City Filter */}
-            <FilterDropdown
-              label="City"
-              value={filters.city}
-              options={cities ?? []}
-              loading={citiesIsPending}
-              error={citiesIsError}
-              onChange={(value) => updateFilter("city", value)}
-              placeholder="Select city"
-              disabled={!filters.nation || isLocationDisabled}
-            />
+
 
             {/* Mode-specific filters */}
             {filters.mode === "Institution" && (
@@ -341,13 +325,13 @@ export default function ExploreContent() {
               )}
               {filters.nation && (
                 <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => updateFilter("nation", undefined)}>
-                  Nation: {(nations as string[]).find((n) => n === filters.nation)}
+                  Nation: {filters.nation}
                   <X className="h-3 w-3" />
                 </Badge>
               )}
               {filters.city && (
                 <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => updateFilter("city", undefined)}>
-                  City: {cities.find((c) => c === filters.city)}
+                  City: {filters.city}
                   <X className="h-3 w-3" />
                 </Badge>
               )}

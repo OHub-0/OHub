@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { ThemeToggle } from "./themetoggle"
 import { NavMenu } from "./navmenu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { checkMe } from "@/lib/queries/checkme"
+import { checkMe } from "@/lib/queries/use-checkme"
 
 export function Navbar() {
   const { data, status } = checkMe();
@@ -21,10 +21,10 @@ export function Navbar() {
       {/* Logo */}
       <div className="mr-4 flex items-center">
         <Link href="/" className="flex items-center space-x-1">
-          <div className="flex h-9 w-8 items-center justify-center rounded-sm bg-black text-white dark:text-black dark:bg-white">
-            <span className="text-xl font-bold">I</span>
+          <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-black text-white dark:text-black dark:bg-white">
+            <span className="text-lg font-bold">I</span>
           </div>
-          <span className="hidden font-bold sm:inline-block">nstitutionPort</span>
+          <span className="hidden font-semibold sm:inline-block">nstitutionPort</span>
         </Link>
       </div>
 

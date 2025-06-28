@@ -1,3 +1,5 @@
+import { genApiResponse } from "@/utils/gen-api-response"
+
 import { NextResponse } from "next/server"
 
 const institutionFilters = {
@@ -16,5 +18,18 @@ const institutionFilters = {
 }
 
 export async function GET() {
-  return NextResponse.json(institutionFilters)
+  try {
+    return genApiResponse({
+      code: "FETCHED",
+      message: `Successfully fetch the institution filters.`,
+      data: institutionFilters,
+      status: 200,
+    })
+  } catch (err) {
+    return genApiResponse({
+      code: "FETCH_FAILED",
+      message: "Sorry, faild to fetch the data. Server Error.",
+      status: 500,
+    })
+  }
 }

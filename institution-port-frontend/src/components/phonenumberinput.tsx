@@ -9,26 +9,26 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Phone, Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/utils/basic-utils"
-import { countries } from "../data/countries"
-import type { Control, FieldErrors } from "react-hook-form"
-import { NationApiRespose, useNationQuery } from "@/lib/queries/nation-city"
+import type { UseFormReturn } from "react-hook-form"
+import { FullNationApiResponse } from "@/utils/types"
 
 interface PhoneNumberInputProps {
-  control: Control<any>
-  errors: FieldErrors<any>
+  nationData: FullNationApiResponse[]
+  isLoading: boolean
+  isError: boolean
+  form: UseFormReturn<any>
 }
 
-export function PhoneNumberInput({ control, errors }: PhoneNumberInputProps) {
-  const [countryCodeOpen, setCountryCodeOpen] = useState(false)
-  const { data, isError, isLoading } = useNationQuery({ code: "true", flag: "true" })
 
+export function PhoneNumberInput({ nationData, isLoading, isError, form }: PhoneNumberInputProps) {
+  const [countryCodeOpen, setCountryCodeOpen] = useState(false)
   return (
     <div className="space-y-4">
       <Label className="text-sm font-medium ">Mobile Number *</Label>
       <div className="flex gap-2">
         <FormField
-          control={control}
-          name="countryCode"
+          control={form.control}
+          name="mobile.countryCode"
           render={({ field }) => (
             <FormItem className="w-28">
               <Popover open={countryCodeOpen} onOpenChange={setCountryCodeOpen}>
@@ -48,9 +48,9 @@ export function PhoneNumberInput({ control, errors }: PhoneNumberInputProps) {
                         ) : isLoading ? (
                           "Loading"
                         ) :
-                          field.value && data ? (
+                          field.value && nationData ? (
                             <div className="flex items-center gap-2">
-                              <span>{(data as NationApiRespose[]).find((c) => c.code === field.value)?.flag}</span>
+                              <span>{nationData.find((c) => c.code === field.value)?.flag}</span>
                               <span>{field.value}</span>
                             </div>
                           ) : (
@@ -69,12 +69,12 @@ export function PhoneNumberInput({ control, errors }: PhoneNumberInputProps) {
                     <CommandList>
                       <CommandEmpty className="text-sm text-center p-2">No country code found</CommandEmpty>
                       <CommandGroup>
-                        {data && (data as NationApiRespose[]).map((country, index) => (
+                        {nationData && nationData.map((country, index) => (
                           <CommandItem
                             value={`${country.name} ${country.code}`}
                             key={`${country.code}-${country.name}-${index}`}
                             onSelect={() => {
-                              field.onChange(country.code)
+                              form.setValue("mobile.countryCode", country.name)
                               setCountryCodeOpen(false)
                             }}
                           >
@@ -98,8 +98,8 @@ export function PhoneNumberInput({ control, errors }: PhoneNumberInputProps) {
           )}
         />
         <FormField
-          control={control}
-          name="phoneNumber"
+          control={form.control}
+          name="mobile.number"
           render={({ field }) => (
             <FormItem className="flex-1">
               <FormControl>
