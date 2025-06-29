@@ -67,32 +67,6 @@ namespace User.ManagementAPI.Services
 
             // add user to role
             await _userManager.AddToRoleAsync(user, role);
-           /* // generate email confirmation token
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = _urlHelper.Action("ConfirmEmail", "Authentication", new { token, email = user.Email }, protocol: "https");
-
-            var message = new Message(new string[] { user.Email }, "Confirmation Email Link : ", confirmationLink);
-            _emailService.SendEmail(message);*/
-
-
-            return (true, new List<string>());
-        }
-
-        public async Task<(bool Success, List<string> Errors)> ConfirmEmailAsync(string token, string email)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                return (false, new List<string> { "User not found." });
-            }
-
-            var result = await _userManager.ConfirmEmailAsync(user, token);
-            if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description).ToList();
-                return (false, errors);
-            }
-
             return (true, new List<string>());
         }
 
@@ -124,7 +98,6 @@ namespace User.ManagementAPI.Services
             return (false, new List<string> { "User Does not exist" }, null, null);
         }
     
-        
         private JwtSecurityToken GenerateJwtToken(IdentityUser user, List<Claim> authClaims)
         {
             var authSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));

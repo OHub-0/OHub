@@ -39,17 +39,6 @@ namespace User.ManagementAPI.Controllers
 
         }
 
-        [HttpGet("confirm-email")]
-     /*   public async Task<IActionResult> ConfirmEmail(string token, string email)
-        {
-            var (success, errors) = await _authService.ConfirmEmailAsync(token, email);
-            if (!success)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,errors);
-            }
-            return Ok(new { Message = "Email confirmed successfully." });
-        }
-*/
 
         [HttpPost]
         [Route("login-user")]
