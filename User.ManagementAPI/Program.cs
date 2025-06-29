@@ -7,16 +7,17 @@ using User.ManagementAPI.Data;
 using User.ManagementAPI.Services;
 using User.ManagementAPI.Services.Interfaces;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// configure database in the application
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//for Identity
+//Configure Identity Framework in the application
 builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// authentication
+// Adding Necessary authentication providers [ JWT ]
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -38,24 +39,22 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add email config
+// Add email config to the application for possible future use
 var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+
+
+// Adding necessary dependencies injection to the application
 builder.Services.AddSingleton(emailConfig);
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// add config for required email
-/*builder.Services.Configure<IdentityOptions>(options => 
-{
-    options.SignIn.RequireConfirmedEmail = true; // Require email confirmation
-    options.User.RequireUniqueEmail = true; // Ensure unique email addresses
-    
-});*/
 
 builder.Services.AddControllers();
+
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-
+// Configuring Swagger for API documentation and adding authorization support
 builder.Services.AddSwaggerGen(options => 
 {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "User Management API", Version = "v1" });
