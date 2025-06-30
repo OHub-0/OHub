@@ -41,7 +41,11 @@ builder.Services.AddAuthentication(options =>
 
 // Add email config to the application for possible future use
 var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
-
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedEmail = true;
+});
 
 // Adding necessary dependencies injection to the application
 builder.Services.AddSingleton(emailConfig);

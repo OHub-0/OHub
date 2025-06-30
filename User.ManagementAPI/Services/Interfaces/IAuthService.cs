@@ -7,5 +7,7 @@ namespace User.ManagementAPI.Services.Interfaces
     {
         public Task<(bool Success, List<string>? Errors)> RegisterUserAsync(RegisterUser registerUser, string role);
         public Task<(bool Success, List<string>? Errors, string? token, DateTime? expires)> LoginAsync(LoginModel LoginUser);
+
+        public Task<(bool Success, List<string>? Errors)>  ConfirmEmailAsync(string token, string email);
     }
 }

@@ -63,5 +63,24 @@ namespace User.ManagementAPI.Controllers
 
         }
 
+        [HttpGet]
+        [Route("ConfirmEmail")]
+        public async Task<IActionResult> ConfirmEmailAsync(string token, string email)
+        {
+            var (success, errors) = await _authService.ConfirmEmailAsync(token, email);
+            if (!success)
+            {
+                return BadRequest(new
+                {
+                    Message = "Email confirmation failed.",
+                    Errors = errors
+                });
+            }
+            return Ok(new
+            {
+                Message = "Email confirmed successfully."
+            });
+        }
+
     }
 }

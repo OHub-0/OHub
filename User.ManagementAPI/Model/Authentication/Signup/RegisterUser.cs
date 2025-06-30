@@ -7,8 +7,7 @@ namespace User.ManagementAPI.Model.Authentication.Signup
         [Required(ErrorMessage = "User name is required")]
         public string? Username { get; set; }
 
-        [Required(ErrorMessage = "Phone number is required")]
-        [Phone(ErrorMessage = "Invalid phone number format")]
+        public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
 
         [Required(ErrorMessage = "Password is required")]

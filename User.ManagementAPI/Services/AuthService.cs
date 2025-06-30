@@ -39,10 +39,10 @@ namespace User.ManagementAPI.Services
         public async Task<(bool Success, List<string> Errors)> RegisterUserAsync(RegisterUser registerUser, string role)
         {
             // check if user already existis
-            var userExists = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == registerUser.PhoneNumber);
+            var userExists = await _userManager.FindByEmailAsync(registerUser.Email);
             if (userExists != null)
             {
-                return (false, new List<string> { "User already exists with this Number already exists." });
+                return (false, new List<string> { "User already exists with this Email already exists." });
             }
             // check if role exists
             if (await _roleManager.RoleExistsAsync(role) == false)
@@ -53,7 +53,7 @@ namespace User.ManagementAPI.Services
             // create user
             IdentityUser user = new()
             {
-                PhoneNumber = registerUser.PhoneNumber,
+                Email = registerUser.Email,
                 UserName = registerUser.Username,
             };
             var result = await _userManager.CreateAsync(user, registerUser.Password);
@@ -67,6 +67,14 @@ namespace User.ManagementAPI.Services
 
             // add user to role
             await _userManager.AddToRoleAsync(user, role);
+
+            // generate email confirmation token and confirmation token
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmationLink = _urlHelper.Action("ConfirmEmail", "Authentication", new { token, email = user.Email }, "https");
+            // send confirmation email
+            var message = new Message(new string[] { user.Email }, "Confirm your email", $"Please confirm your account by clicking this link: <a href='{confirmationLink}'>link</a>");
+            _emailService.SendEmail(message);
+
             return (true, new List<string>());
         }
 
@@ -74,14 +82,14 @@ namespace User.ManagementAPI.Services
         {
             // check whether user exists
            
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == loginUser.PhoneNumber);
+            var user = await _userManager.FindByEmailAsync(loginUser.Email);
 
             if (user != null && await _userManager.CheckPasswordAsync(user, loginUser.Password))
             {
                 var authClaims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
-                    new Claim(ClaimTypes.NameIdentifier, user.PhoneNumber),
+                    new Claim(ClaimTypes.NameIdentifier, user.Email),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 };
 
@@ -97,7 +105,25 @@ namespace User.ManagementAPI.Services
 
             return (false, new List<string> { "User Does not exist" }, null, null);
         }
-    
+
+        public async Task<(bool Success, List<string>? Errors)> ConfirmEmailAsync(string token, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return (false, new List<string> { "User does not exist." });
+            }
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+            {
+                return (true, null);
+            }
+            else
+            {
+                var errors = result.Errors.Select(e => e.Description).ToList();
+                return (false, errors);
+            }
+        }
         private JwtSecurityToken GenerateJwtToken(IdentityUser user, List<Claim> authClaims)
         {
             var authSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
