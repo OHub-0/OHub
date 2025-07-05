@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using PublicAPI.Services.Interfaces;
 
 namespace PublicAPI.Model
 {
-    public class UserModel : IdentityUser
+    public class UserModel : IdentityUser, IAuditable
     {
         [Required, MaxLength(100)]  
         public string FirstName { get; set; }
