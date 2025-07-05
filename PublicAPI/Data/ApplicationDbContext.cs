@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using PublicAPI.Model;
+using PublicAPI.Services.Interfaces;
 
 namespace PublicAPI.Data
 {
@@ -45,7 +46,7 @@ namespace PublicAPI.Data
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var entries = ChangeTracker.Entries<UserModel>()
+            var entries = ChangeTracker.Entries<IAuditable>()
                 .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
 
             foreach (var entry in entries)
