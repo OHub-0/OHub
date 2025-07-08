@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using PublicAPI.Model.Authentication.Signup;
+using PublicAPI.DTO;
 using PublicAPI.Services.Interfaces;
 using User.Management.Service.Models;
 using User.Management.Service.Services;
@@ -37,7 +37,7 @@ namespace PublicAPI.Services
             this._configuration = configuration;
         }
 
-        public async Task<(bool Success, List<string> Errors)> RegisterUserAsync(RegisterUser registerUser, string role)
+        public async Task<(bool Success, List<string> Errors)> RegisterUserAsync(RegisterUserDTO registerUser, string role)
         {
             // check if user already existis
             var userExists = await _userManager.FindByEmailAsync(registerUser.Email);
@@ -56,6 +56,15 @@ namespace PublicAPI.Services
             {
                 Email = registerUser.Email,
                 UserName = registerUser.Username,
+                FirstName = registerUser.FirstName,
+                LastName = registerUser.LastName,
+                MiddleName = registerUser.MiddleName,
+                PhoneNumber = registerUser.PhoneNumber,
+                DateofBirth = registerUser.DateofBirth,
+                Address = registerUser.Address,
+                City = registerUser.City,
+                State = registerUser.State,
+                Country = registerUser.Country,
             };
             var result = await _userManager.CreateAsync(user, registerUser.Password);
 
@@ -79,7 +88,7 @@ namespace PublicAPI.Services
             return (true, new List<string>());
         }
 
-        public async Task<(bool Success, List<string>? Errors, string? token, DateTime? expires)> LoginAsync(LoginModel loginUser)
+        public async Task<(bool Success, List<string>? Errors, string? token, DateTime? expires)> LoginAsync(LoginUserDTO loginUser)
         {
             // check whether user exists
            

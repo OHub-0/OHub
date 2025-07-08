@@ -1,12 +1,12 @@
 ﻿using PublicAPI.Model.Authentication.Login;
-using PublicAPI.Model.Authentication.Signup;
+using PublicAPI.DTO;
 
 namespace PublicAPI.Services.Interfaces
 {
     public interface IAuthService
     {
-        public Task<(bool Success, List<string>? Errors)> RegisterUserAsync(RegisterUser registerUser, string role);
-        public Task<(bool Success, List<string>? Errors, string? token, DateTime? expires)> LoginAsync(LoginModel LoginUser);
+        public Task<(bool Success, List<string>? Errors)> RegisterUserAsync(RegisterUserDTO registerUser, string role);
+        public Task<(bool Success, List<string>? Errors, string? token, DateTime? expires)> LoginAsync(LoginUserDTO LoginUser);
 
         public Task<(bool Success, List<string>? Errors)>  ConfirmEmailAsync(string token, string email);
     }
