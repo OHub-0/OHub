@@ -7,10 +7,10 @@ namespace PublicAPI.Model
     public class UserModel : IdentityUser, IAuditable
     {
         [Required, MaxLength(100)]  
-        public string FirstName { get; set; }
+        public string? FirstName { get; set; }
 
         [Required, MaxLength(56)]
-        public string MiddleName { get; set; }
+        public string? MiddleName { get; set; }
 
         [Required, MaxLength(100)]
         public string? LastName { get; set; }
