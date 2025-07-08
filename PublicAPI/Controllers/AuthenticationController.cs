@@ -7,6 +7,7 @@ using User.Management.Service.Models;
 using PublicAPI.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using PublicAPI.Model.Authentication.Login;
+using PublicAPI.DTO;
 
 namespace PublicAPI.Controllers
 {
@@ -24,7 +25,7 @@ namespace PublicAPI.Controllers
         }
 
         [HttpPost("register-user")]
-        public async Task<IActionResult> RegisterUser([FromBody]RegisterUser registerUser, string role)
+        public async Task<IActionResult> RegisterUser([FromBody]RegisterUserDTO registerUser, string role)
         {
             var (success, errors) = await _authService.RegisterUserAsync(registerUser, role);
             if (!success)
@@ -42,7 +43,7 @@ namespace PublicAPI.Controllers
 
         [HttpPost]
         [Route("login-user")]
-        public async Task<IActionResult> LoginAsync([FromBody] LoginModel user)
+        public async Task<IActionResult> LoginAsync([FromBody] LoginUserDTO user)
         {
             var (success, errors, token, expires) = await _authService.LoginAsync(user);
 
