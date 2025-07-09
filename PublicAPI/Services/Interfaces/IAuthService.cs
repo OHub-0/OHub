@@ -1,5 +1,4 @@
-﻿using PublicAPI.Model.Authentication.Login;
-using PublicAPI.DTO;
+﻿using PublicAPI.DTO;
 
 namespace PublicAPI.Services.Interfaces
 {

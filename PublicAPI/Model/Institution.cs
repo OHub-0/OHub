@@ -7,6 +7,7 @@ namespace PublicAPI.Model
 {
     public class Institution : IAuditable
     {
+        [Key]
         public int Id { get; set; }
 
         [Required, MaxLength(100)]

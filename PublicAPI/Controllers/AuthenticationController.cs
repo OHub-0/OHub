@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using PublicAPI.Model.Authentication.Signup;
 using User.Management.Service.Services;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using User.Management.Service.Models;
 using PublicAPI.Services.Interfaces;
 using Microsoft.IdentityModel.Tokens;
-using PublicAPI.Model.Authentication.Login;
 using PublicAPI.DTO;
 
 namespace PublicAPI.Controllers
