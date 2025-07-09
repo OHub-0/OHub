@@ -66,5 +66,19 @@ namespace PublicAPI.Controllers
             });
         }
 
+        [HttpGet("delete-institution/{id}")]
+        public async Task<IActionResult> DeleteInstitution(int id)
+        {
+            var (success, errors) = await _institutionService.DeleteInstitutionByIdAsync(id);
+            if (!success)
+            {
+                return NotFound(new
+                {
+                    Success = false,
+                    Errors = errors
+                });
+            }
+            return NoContent();
+        }
     }
 }

@@ -3,6 +3,7 @@ using PublicAPI.DTO;
 using PublicAPI.Services.Interfaces;
 using PublicAPI.Model;
 using PublicAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace PublicAPI.Services
 {
@@ -52,6 +53,18 @@ namespace PublicAPI.Services
                 return (false, new List<string> { "Institution not found" }, null);
             }
             return (true, null, res);
+        }
+
+        public async Task<(bool Success, List<string>? Errors)> DeleteInstutionByIdAsync(int id)
+        {
+             var res = await _context.Institutions.FindAsync(id);
+             if (res == null)
+             {
+                 return (false, new List<string> { "Institution not found" });
+             }
+             _context.Institutions.Remove(res);
+            await _context.SaveChangesAsync();
+            return (true, null);
         }
     }
 }
