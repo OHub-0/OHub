@@ -66,13 +66,24 @@ namespace PublicAPI.Controllers
             });
         }
 
-        [HttpGet("delete-institution/{id}")]
+        [Authorize]
+        [HttpPost("delete-institution/{id}")]
         public async Task<IActionResult> DeleteInstitution(int id)
         {
-            var (success, errors) = await _institutionService.DeleteInstitutionByIdAsync(id);
+            var adminId = User.FindFirst(Claim.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(adminId))
+            {
+                return Unauthorized(new
+                {
+                    Success = false,
+                    Errors = new List<string> { "User is not authorized." }
+                });
+            }
+
+            var (success, errors) = await _institutionService.DeleteInstitutionByIdAsync(id, adminId);
             if (!success)
             {
-                return NotFound(new
+                return BadRequest(new
                 {
                     Success = false,
                     Errors = errors

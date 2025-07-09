@@ -8,7 +8,7 @@ namespace PublicAPI.Services.Interfaces
 
         public Task<(bool Success, List<string>? Errors, Institution institution)> GetInstitutionByIdAsync(int id);
 
-        public Task<(bool Success, List<string>? Errors)> DeleteInstitutionByIdAsync(int id);
+        public Task<(bool Success, List<string>? Errors)> DeleteInstitutionByIdAsync(int id, string adminId);
 
     }
 }

@@ -55,16 +55,22 @@ namespace PublicAPI.Services
             return (true, null, res);
         }
 
-        public async Task<(bool Success, List<string>? Errors)> DeleteInstitutionByIdAsync(int id)
-        {
+        public async Task<(bool Success, List<string>? Errors)> DeleteInstitutionByIdAsync(int id, string adminId)
+        { 
              var res = await _context.Institutions.FindAsync(id);
              if (res == null)
              {
                  return (false, new List<string> { "Institution not found" });
              }
+
+             if (res.AdminId != adminId)
+             {
+                return (false, new List<string> { "You are not authorized to delete this institution" });
+             }
+
              _context.Institutions.Remove(res);
-            await _context.SaveChangesAsync();
-            return (true, null);
+             await _context.SaveChangesAsync();
+             return (true, null);
         }
     }
 }
