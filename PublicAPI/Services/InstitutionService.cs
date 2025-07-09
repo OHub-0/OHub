@@ -55,7 +55,7 @@ namespace PublicAPI.Services
             return (true, null, res);
         }
 
-        public async Task<(bool Success, List<string>? Errors)> DeleteInstutionByIdAsync(int id)
+        public async Task<(bool Success, List<string>? Errors)> DeleteInstitutionByIdAsync(int id)
         {
              var res = await _context.Institutions.FindAsync(id);
              if (res == null)
