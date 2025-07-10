@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using PublicAPI.Services.Interfaces;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PublicAPI.Model
 {
-    public class Course
+    public class Course: IAuditable
     {
         public int Id { get; set; }
         public string Title { get; set; }
@@ -13,7 +14,7 @@ namespace PublicAPI.Model
         public Institution Institution { get; set; }
 
         public DateTime CreatedDate { get; set; }
-        public DateTime ModifiedDate { get; set; }
+        public DateTime? ModifiedDate { get; set; }
 
     }
 }
