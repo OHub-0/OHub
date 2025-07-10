@@ -36,6 +36,17 @@ namespace PublicAPI.Services
                 institution.Type = institutionDto.Type;
         }
 
+        public static void UpdateFromDto(this Course course, CourseDTO courseDto)
+        {
+            if (!string.IsNullOrEmpty(courseDto.Title))
+                course.Title = courseDto.Title;
+
+            if (!string.IsNullOrEmpty(courseDto.Description))
+                course.Description = courseDto.Description;
+
+            if (courseDto.InstitutionId > 0)
+                course.InstitutionId = courseDto.InstitutionId;
+        }
         public static CreateInstitutionDTO ToDto(this Institution institution)
         {
             return new CreateInstitutionDTO
@@ -51,6 +62,17 @@ namespace PublicAPI.Services
                 State = institution.State,
                 City = institution.City,
                 Type = institution.Type
+            };
+        }
+
+        public static CourseDTO ToDto(this Course course)
+        {
+            return new CourseDTO
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Description = course.Description,
+                InstitutionId = course.InstitutionId
             };
         }
     }
