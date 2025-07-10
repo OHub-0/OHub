@@ -16,13 +16,13 @@ namespace PublicAPI.Services
             this._userManager = userManager;
             _context = context;
         }
-        public async Task<(bool Success, List<string>? Errors)> CreateInstitutionAsync(CreateInstitutionDTO institutiondto)
+        public async Task<(bool Success, List<string>? Errors, int? dbId)> CreateInstitutionAsync(CreateInstitutionDTO institutiondto)
         {
             // check if user exists
             var user = await _userManager.FindByIdAsync(institutiondto.AdminId);
             if (user == null)
             {
-                return (false, new List<string> { "User with given Id doesn't exist" });
+                return (false, new List<string> { "User with given Id doesn't exist" }, null);
             }
 
             var institution = new Institution
@@ -42,17 +42,17 @@ namespace PublicAPI.Services
             _context.Institutions.Add(institution);
             await _context.SaveChangesAsync();
 
-            return (true, null);
+            return (true, null, institution.Id);
         }
 
-        public async Task<(bool Success, List<string>? Errors, Institution? institution)> GetInstitutionByIdAsync(int id)
+        public async Task<(bool Success, List<string>? Errors, CreateInstitutionDTO? institutionDto)> GetInstitutionByIdAsync(int id)
         {
             var res = await _context.Institutions.FindAsync(id);
             if (res == null)
             {
                 return (false, new List<string> { "Institution not found" }, null);
             }
-            return (true, null, res);
+            return (true, null, res.ToDto());
         }
 
         public async Task<(bool Success, List<string>? Errors)> DeleteInstitutionByIdAsync(int id, string adminId)
@@ -73,7 +73,7 @@ namespace PublicAPI.Services
              return (true, null);
         }
 
-        public async Task<(bool Success, List<string>? Errors)> UpdateInstitutionAsync(CreateInstitutionDTO institutionDTO)
+        public async Task<(bool Success, List<string>? Errors)> UpdateInstitutionAsync(CreateInstitutionDTO institutionDTO, string adminId)
         {
             var institution = await _context.Institutions.FindAsync(institutionDTO.Id);
             if (institution == null)
@@ -81,20 +81,12 @@ namespace PublicAPI.Services
                 return (false, new List<string> { "Institution not found" });
             }
 
-            if (institution.AdminId != institutionDTO.AdminId)
+            if (institution.AdminId != adminId)
             {
                 return (false, new List<string> { "You are not authorized to update this institution" });
             }
 
-            institution.Name = institutionDTO.Name;
-            institution.Description = institutionDTO.Description;
-            institution.PrimaryEmail = institutionDTO.PrimaryEmail;
-            institution.SecondaryEmail = institutionDTO.SecondaryEmail;
-            institution.PrimaryPhone = institutionDTO.PrimaryPhone;
-            institution.Country = institutionDTO.Country;
-            institution.State = institutionDTO.State;
-            institution.City = institutionDTO.City;
-            institution.Type = institutionDTO.Type;
+            institution.UpdateFromDto(institutionDTO);
 
             _context.Institutions.Update(institution);
             await _context.SaveChangesAsync();
