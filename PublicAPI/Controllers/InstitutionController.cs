@@ -92,6 +92,8 @@ namespace PublicAPI.Controllers
             return NoContent();
         }
 
+        [Authorize]
+        [HttpPost("update-institution")]
         public async Task<IActionResult> UpdateInstitution([FromBody] CreateInstitutionDTO institutiondto)
         {
             if (string.IsNullOrWhiteSpace(institutiondto.AdminId))
