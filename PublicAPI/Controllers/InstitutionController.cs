@@ -91,5 +91,31 @@ namespace PublicAPI.Controllers
             }
             return NoContent();
         }
+
+        public async Task<IActionResult> UpdateInstitution([FromBody] CreateInstitutionDTO institutiondto)
+        {
+            if (string.IsNullOrWhiteSpace(institutiondto.AdminId))
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Errors = new List<string> { "AdminId is required." }
+                });
+            }
+            var (success, errors) = await _institutionService.UpdateInstitutionAsync(institutiondto);
+            if (!success)
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Errors = errors
+                });
+            }
+            return Ok(new
+            {
+                Success = true,
+                Message = "Institution updated successfully."
+            });
+        } 
     }
 }
