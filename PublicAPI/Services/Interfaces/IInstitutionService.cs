@@ -10,5 +10,7 @@ namespace PublicAPI.Services.Interfaces
 
         public Task<(bool Success, List<string>? Errors)> DeleteInstitutionByIdAsync(int id, string adminId);
 
+        public Task<(bool Success, List<string>? Errors)> UpdateInstitutionAsync(CreateInstitutionDTO institutionDTO);
+
     }
 }

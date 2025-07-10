@@ -72,5 +72,34 @@ namespace PublicAPI.Services
              await _context.SaveChangesAsync();
              return (true, null);
         }
+
+        public async Task<(bool Success, List<string>? Errors)> UpdateInstitutionAsync(CreateInstitutionDTO institutionDTO)
+        {
+            var institution = await _context.Institutions.FindAsync(institutionDTO.Id);
+            if (institution == null)
+            {
+                return (false, new List<string> { "Institution not found" });
+            }
+
+            if (institution.AdminId != institutionDTO.AdminId)
+            {
+                return (false, new List<string> { "You are not authorized to update this institution" });
+            }
+
+            institution.Name = institutionDTO.Name;
+            institution.Description = institutionDTO.Description;
+            institution.PrimaryEmail = institutionDTO.PrimaryEmail;
+            institution.SecondaryEmail = institutionDTO.SecondaryEmail;
+            institution.PrimaryPhone = institutionDTO.PrimaryPhone;
+            institution.Country = institutionDTO.Country;
+            institution.State = institutionDTO.State;
+            institution.City = institutionDTO.City;
+            institution.Type = institutionDTO.Type;
+
+            _context.Institutions.Update(institution);
+            await _context.SaveChangesAsync();
+
+            return (true, null);
+        }
     }
 }
