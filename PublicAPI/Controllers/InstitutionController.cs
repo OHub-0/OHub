@@ -28,7 +28,7 @@ namespace PublicAPI.Controllers
                 string userId = User.FindFirst(Claim.NameIdentifier)?.Value;
                 institutiondto.AdminId = userId;
             }
-            var (success, errors) = await _institutionService.CreateInstitutionAsync(institutiondto);
+            var (success, errors, dbId) = await _institutionService.CreateInstitutionAsync(institutiondto);
 
             if (!success)
             {
@@ -39,7 +39,7 @@ namespace PublicAPI.Controllers
                 });
             }
 
-            return Ok(new
+            return CreatedAtAction(nameof(GetInstitution), new { id = dbId }, new
             {
                 Success = true,
                 Message = "Institution created successfully."
@@ -96,15 +96,8 @@ namespace PublicAPI.Controllers
         [HttpPost("update-institution")]
         public async Task<IActionResult> UpdateInstitution([FromBody] CreateInstitutionDTO institutiondto)
         {
-            if (string.IsNullOrWhiteSpace(institutiondto.AdminId))
-            {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Errors = new List<string> { "AdminId is required." }
-                });
-            }
-            var (success, errors) = await _institutionService.UpdateInstitutionAsync(institutiondto);
+            var adminId = User.FindFirst(Claim.NameIdentifier)?.Value;
+            var (success, errors) = await _institutionService.UpdateInstitutionAsync(institutiondto, adminId);
             if (!success)
             {
                 return BadRequest(new
