@@ -12,21 +12,19 @@ namespace PublicAPI.Model
         public UserModel Follower { get; set; }
 
         
-        public int CourseId { get; set; }
+        public int? CourseId { get; set; }
         [ForeignKey(nameof(CourseId))]
-        public Course course { get; set; }
-        public int FormId { get; set; }
+        public Course? course { get; set; }
+        public int? FormId { get; set; }
         [ForeignKey(nameof(FormId))]
-        public Form form { get; set; }
+        public Form? form { get; set; }
 
-        public int InstitutionId { get; set; }
+        public int? InstitutionId { get; set; }
         [ForeignKey(nameof(InstitutionId))]
-        public Institution Institution { get; set; }
+        public Institution? Institution { get; set; }
 
         public DateTime CreatedDate { get; set; }
         public DateTime? ModifiedDate { get; set; }
-
-        public string? note { get; set; }
 
     }
 }
