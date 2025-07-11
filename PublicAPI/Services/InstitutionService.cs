@@ -68,6 +68,19 @@ namespace PublicAPI.Services
                 return (false, new List<string> { "You are not authorized to delete this institution" });
              }
 
+             // Check if the institution has any courses or students who follow them
+             var hasCourses = await _context.Courses.Where(c => c.InstitutionId == id).ToListAsync();
+             var hasFollowRecords = await _context.Follows.Where(f => f.InstitutionId == id).ToListAsync();
+            foreach (var course in hasCourses)
+            {
+                var coursesFollowers = await _context.Follows.Where(f => f.CourseId == course.Id).ToListAsync();
+                _context.Follows.RemoveRange(coursesFollowers);
+            }
+            if (hasCourses.Any()) 
+                _context.Courses.RemoveRange(hasCourses);
+            if (hasFollowRecords.Any())
+                _context.Follows.RemoveRange(hasFollowRecords);
+
              _context.Institutions.Remove(res);
              await _context.SaveChangesAsync();
              return (true, null);
