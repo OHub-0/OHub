@@ -75,5 +75,16 @@ namespace PublicAPI.Services
                 InstitutionId = course.InstitutionId
             };
         }
+
+        public static FollowDTO ToDto(this follow f)
+        {
+            return new FollowDTO
+            {
+                FollowerId = f.FollowerId,
+                CourseId = f.CourseId,
+                FormId = f.FormId,
+                InstitutionId = f.InstitutionId
+            };
+        }
     }
 }
