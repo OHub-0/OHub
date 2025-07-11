@@ -34,7 +34,7 @@ namespace PublicAPI.Model
         public DateTime? ModifiedDate { get; set; }
 
         public ICollection<Course> Courses { get; set; }
-        public ICollection<Form> Forms { get; set; }
+        //public ICollection<Form> Forms { get; set; }
         public ICollection<follow> Followers { get; set; }
 
     }
