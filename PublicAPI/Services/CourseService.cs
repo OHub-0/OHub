@@ -15,10 +15,6 @@ namespace PublicAPI.Services
         }
         public async Task<(bool Success, List<string>? Errors, int? courseId)> CreateCourseAsync(CourseDTO courseDto, string adminId)
         {
-            // check if institutionexist
-            // check if institution admin is the user making the request
-            // check if course already exists
-
             var institution = await _context.Institutions.FindAsync(courseDto.InstitutionId);
             if (institution == null)
             {
@@ -60,7 +56,6 @@ namespace PublicAPI.Services
             {
                 return (false, new List<string> { "Course not found" });
             }
-
             var institution = await _context.Institutions.FindAsync(course.InstitutionId);
             if (institution == null || institution.AdminId != adminId)
             {
@@ -88,6 +83,18 @@ namespace PublicAPI.Services
             course.UpdateFromDto(courseDto);
             await _context.SaveChangesAsync();
             return (true, null);
+        }
+
+        public async Task<(bool Success, List<string>? Errors, IEnumerable<CourseDTO>? courses)> GetAllCoursesByInstitutionId(int institutionId)
+        {
+            var courses = _context.Courses.Where(c => c.InstitutionId == institutionId).ToList();
+            var coursesDto = courses.Select(c => c.ToDto()).ToList();
+            if (courses == null)
+            {
+                return (false, new List<string> { "No courses found for this institution" }, null);
+            }
+            return (true, null, coursesDto);
+
         }
     }
 }
