@@ -23,6 +23,11 @@ namespace PublicAPI.Model
         public string? State { get; set; }
         public string? Country { get; set; }
 
+        public ICollection<Institution> InstitutionsAdministered { get; set; } = null!;
+        public ICollection<FollowInstitution>? FollowingInstitutions { get; set; }
+        public ICollection<FollowCourse>? FollowingCourses { get; set; }
+        public ICollection<FollowForm>? FollowingForms { get; set; }
+
         public DateTime CreatedDate { get; set; }
         public DateTime? ModifiedDate { get; set; }
 
