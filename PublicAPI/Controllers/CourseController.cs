@@ -107,5 +107,28 @@ namespace PublicAPI.Controllers
                 Message = "Course updated successfully."
             });
         }
+
+        [HttpGet("institution/{id}")]
+        public async Task<IActionResult> GetAllCourses(int id)
+        {
+            var (success, errors, courses) = await _courseService.GetAllCoursesByInstitutionId(id);
+            if (!success)
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Errors = errors
+                });
+            }
+
+            return Ok(new
+            {
+                Success = true,
+                Courses = courses
+            });
+        }
+
+
+
     }
 }
