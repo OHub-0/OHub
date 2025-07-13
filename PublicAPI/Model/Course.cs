@@ -13,7 +13,8 @@ namespace PublicAPI.Model
         [ForeignKey(nameof(InstitutionId))]
         public Institution Institution { get; set; }
 
-        public ICollection<Form> Forms { get; set; }
+        public ICollection<Form>? Forms { get; set; }
+        public ICollection<FollowCourse>? Followers { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? ModifiedDate { get; set; }
 
