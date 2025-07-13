@@ -11,31 +11,30 @@ namespace PublicAPI.Model
         public int Id { get; set; }
 
         [Required, MaxLength(100)]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
         [Required]
-        public string Description { get; set; }
+        public string Description { get; set; } = null!;
 
-        public UserModel Admin { get; set; }
+        public UserModel Admin { get; set; } = null!;
 
         [ForeignKey(nameof(Admin))]
-        public string AdminId { get; set; }
+        public string AdminId { get; set; } = null!;
 
         public string? SecondaryEmail { get; set; }
-        public string Country { get; set; }
-        public string State { get; set; }
-        public string City { get; set; }
+        public string Country { get; set; } = null!;
+        public string State { get; set; } = null!;
+        public string City { get; set; } = null!;
 
-        public string Type { get; set; }
-        public string PrimaryEmail { get; set; }
+        public string Type { get; set; } = null!;
+        public string PrimaryEmail { get; set; } = null!;
         public string? PrimaryPhone { get; set; }
 
         public DateTime CreatedDate { get; set; }
         public DateTime? ModifiedDate { get; set; }
 
-        public ICollection<Course> Courses { get; set; }
-        //public ICollection<Form> Forms { get; set; }
-        public ICollection<follow> Followers { get; set; }
+        public ICollection<Course> Courses { get; set; } = null!;
+        public ICollection<FollowInstitution> Followers { get; set; } = null!;
 
     }
 }
