@@ -11,7 +11,9 @@ namespace PublicAPI.Data
         public DbSet<Institution> Institutions { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Form> Forms { get; set; }
-        public DbSet<follow> Follows { get; set; }
+        public DbSet<FollowInstitution> FollowInstitutions { get; set; }
+        public DbSet<FollowCourse> FollowCourses { get; set; }
+        public DbSet<FollowForm> FollowForms { get; set; }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
 
@@ -47,50 +49,58 @@ namespace PublicAPI.Data
             SeedRoles(builder);
             builder.Entity<UserModel>().HasIndex(u => u.PhoneNumber).IsUnique();
 
-            // avoid cascading effects here 
-            builder.Entity<Institution>()
-                .HasOne(i => i.Admin)
-                .WithMany()
-                .HasForeignKey(i => i.AdminId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Form>()
-                .HasOne(f => f.Institution)
-                .WithMany(i => i.Forms)
-                .HasForeignKey(f => f.InstitutionId)
-                .OnDelete(DeleteBehavior.Restrict);
-
+            builder.Entity<Course>()
+                .HasOne(c => c.Institution)
+                .WithMany(i => i.Courses)
+                .HasForeignKey(c => c.InstitutionId)
+                .OnDelete(DeleteBehavior.Cascade);
+     
             builder.Entity<Form>()
                 .HasOne(f => f.Course)
-                .WithMany()
+                .WithMany(c => c.Forms)
                 .HasForeignKey(f => f.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Institution>()
+                .HasOne(i => i.Admin)
+                .WithMany(u => u.InstitutionsAdministered)
+                .HasForeignKey(i => i.AdminId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-
-            builder.Entity<Course>()
-                .HasOne(Course => Course.Institution)
-                .WithMany(Institution => Institution.Courses)
-                .HasForeignKey(Course => Course.InstitutionId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<follow>()
+            
+            // if entity is deleted, all followers should also be deleted
+            builder.Entity<FollowInstitution>()
                 .HasOne(f => f.Institution)
                 .WithMany(i => i.Followers)
                 .HasForeignKey(f => f.InstitutionId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<follow>()
-                .HasOne(f => f.form)
-                .WithMany()
+            builder.Entity<FollowCourse>()
+                .HasOne(f => f.Course)
+                .WithMany(c => c.Followers)
+                .HasForeignKey(f => f.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<FollowForm>()
+                .HasOne(f => f.Form)
+                .WithMany(f => f.Followers)
                 .HasForeignKey(f => f.FormId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<follow>()
-               .HasOne(f => f.course)
-               .WithMany()
-               .HasForeignKey(f => f.CourseId)
-               .OnDelete(DeleteBehavior.Restrict);
-
+            // if user is deleted then delete all its follow records
+            builder.Entity<FollowInstitution>()
+                .HasOne(f => f.Follower)
+                .WithMany(u => u.FollowingInstitutions)
+                .HasForeignKey(f => f.FollowerId)
+                .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<FollowCourse>()
+                .HasOne(f => f.Follower)
+                .WithMany(u => u.FollowingCourses)
+                .HasForeignKey(f => f.FollowerId)
+                .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<FollowForm>()
+                .HasOne(f => f.Follower)
+                .WithMany(u => u.FollowingForms)
+                .HasForeignKey(f => f.FollowerId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
 
