@@ -53,6 +53,8 @@ builder.Services.AddSingleton(emailConfig);
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IInstitutionService, InstitutionService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IFollowService, FollowService>();
 
 
 builder.Services.AddControllers();

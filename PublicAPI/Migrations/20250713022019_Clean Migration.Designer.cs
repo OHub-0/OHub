@@ -12,7 +12,7 @@ using PublicAPI.Data;
 namespace PublicAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250708011356_CleanMigration")]
+    [Migration("20250713022019_Clean Migration")]
     partial class CleanMigration
     {
         /// <inheritdoc />
@@ -196,7 +196,7 @@ namespace PublicAPI.Migrations
                     b.Property<int>("InstitutionId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("ModifiedDate")
+                    b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Title")
@@ -208,6 +208,96 @@ namespace PublicAPI.Migrations
                     b.HasIndex("InstitutionId");
 
                     b.ToTable("Courses");
+                });
+
+            modelBuilder.Entity("PublicAPI.Model.FollowCourse", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FollowerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("FollowerId");
+
+                    b.ToTable("FollowCourses");
+                });
+
+            modelBuilder.Entity("PublicAPI.Model.FollowForm", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FollowerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FollowerId");
+
+                    b.HasIndex("FormId");
+
+                    b.ToTable("FollowForms");
+                });
+
+            modelBuilder.Entity("PublicAPI.Model.FollowInstitution", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FollowerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("InstitutionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FollowerId");
+
+                    b.HasIndex("InstitutionId");
+
+                    b.ToTable("FollowInstitutions");
                 });
 
             modelBuilder.Entity("PublicAPI.Model.Form", b =>
@@ -228,16 +318,13 @@ namespace PublicAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("InstitutionId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("OpenFrom")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("OpenUntil")
+                    b.Property<DateTime?>("OpenUntil")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Title")
@@ -247,8 +334,6 @@ namespace PublicAPI.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
-
-                    b.HasIndex("InstitutionId");
 
                     b.ToTable("Forms");
                 });
@@ -418,49 +503,6 @@ namespace PublicAPI.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("PublicAPI.Model.follow", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FollowerId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("FormId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("InstitutionId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("FollowerId");
-
-                    b.HasIndex("FormId");
-
-                    b.HasIndex("InstitutionId");
-
-                    b.ToTable("Follows");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -517,8 +559,65 @@ namespace PublicAPI.Migrations
                     b.HasOne("PublicAPI.Model.Institution", "Institution")
                         .WithMany("Courses")
                         .HasForeignKey("InstitutionId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Institution");
+                });
+
+            modelBuilder.Entity("PublicAPI.Model.FollowCourse", b =>
+                {
+                    b.HasOne("PublicAPI.Model.Course", "Course")
+                        .WithMany("Followers")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PublicAPI.Model.UserModel", "Follower")
+                        .WithMany("FollowingCourses")
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Follower");
+                });
+
+            modelBuilder.Entity("PublicAPI.Model.FollowForm", b =>
+                {
+                    b.HasOne("PublicAPI.Model.UserModel", "Follower")
+                        .WithMany("FollowingForms")
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PublicAPI.Model.Form", "Form")
+                        .WithMany("Followers")
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Follower");
+
+                    b.Navigation("Form");
+                });
+
+            modelBuilder.Entity("PublicAPI.Model.FollowInstitution", b =>
+                {
+                    b.HasOne("PublicAPI.Model.UserModel", "Follower")
+                        .WithMany("FollowingInstitutions")
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PublicAPI.Model.Institution", "Institution")
+                        .WithMany("Followers")
+                        .HasForeignKey("InstitutionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Follower");
 
                     b.Navigation("Institution");
                 });
@@ -526,26 +625,18 @@ namespace PublicAPI.Migrations
             modelBuilder.Entity("PublicAPI.Model.Form", b =>
                 {
                     b.HasOne("PublicAPI.Model.Course", "Course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("PublicAPI.Model.Institution", "Institution")
                         .WithMany("Forms")
-                        .HasForeignKey("InstitutionId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Course");
-
-                    b.Navigation("Institution");
                 });
 
             modelBuilder.Entity("PublicAPI.Model.Institution", b =>
                 {
                     b.HasOne("PublicAPI.Model.UserModel", "Admin")
-                        .WithMany()
+                        .WithMany("InstitutionsAdministered")
                         .HasForeignKey("AdminId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -553,39 +644,16 @@ namespace PublicAPI.Migrations
                     b.Navigation("Admin");
                 });
 
-            modelBuilder.Entity("PublicAPI.Model.follow", b =>
+            modelBuilder.Entity("PublicAPI.Model.Course", b =>
                 {
-                    b.HasOne("PublicAPI.Model.Course", "course")
-                        .WithMany()
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Navigation("Followers");
 
-                    b.HasOne("PublicAPI.Model.UserModel", "Follower")
-                        .WithMany()
-                        .HasForeignKey("FollowerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Forms");
+                });
 
-                    b.HasOne("PublicAPI.Model.Form", "form")
-                        .WithMany()
-                        .HasForeignKey("FormId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("PublicAPI.Model.Institution", "Institution")
-                        .WithMany("Followers")
-                        .HasForeignKey("InstitutionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Follower");
-
-                    b.Navigation("Institution");
-
-                    b.Navigation("course");
-
-                    b.Navigation("form");
+            modelBuilder.Entity("PublicAPI.Model.Form", b =>
+                {
+                    b.Navigation("Followers");
                 });
 
             modelBuilder.Entity("PublicAPI.Model.Institution", b =>
@@ -593,8 +661,17 @@ namespace PublicAPI.Migrations
                     b.Navigation("Courses");
 
                     b.Navigation("Followers");
+                });
 
-                    b.Navigation("Forms");
+            modelBuilder.Entity("PublicAPI.Model.UserModel", b =>
+                {
+                    b.Navigation("FollowingCourses");
+
+                    b.Navigation("FollowingForms");
+
+                    b.Navigation("FollowingInstitutions");
+
+                    b.Navigation("InstitutionsAdministered");
                 });
 #pragma warning restore 612, 618
         }

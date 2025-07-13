@@ -208,7 +208,7 @@ namespace PublicAPI.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     InstitutionId = table.Column<int>(type: "int", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -218,7 +218,63 @@ namespace PublicAPI.Migrations
                         column: x => x.InstitutionId,
                         principalTable: "Institutions",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FollowInstitutions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FollowerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    InstitutionId = table.Column<int>(type: "int", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FollowInstitutions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FollowInstitutions_AspNetUsers_FollowerId",
+                        column: x => x.FollowerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FollowInstitutions_Institutions_InstitutionId",
+                        column: x => x.InstitutionId,
+                        principalTable: "Institutions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FollowCourses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FollowerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CourseId = table.Column<int>(type: "int", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FollowCourses", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FollowCourses_AspNetUsers_FollowerId",
+                        column: x => x.FollowerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FollowCourses_Courses_CourseId",
+                        column: x => x.CourseId,
+                        principalTable: "Courses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -229,12 +285,11 @@ namespace PublicAPI.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    InstitutionId = table.Column<int>(type: "int", nullable: false),
                     CourseId = table.Column<int>(type: "int", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     OpenFrom = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    OpenUntil = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    OpenUntil = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -244,56 +299,35 @@ namespace PublicAPI.Migrations
                         column: x => x.CourseId,
                         principalTable: "Courses",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Forms_Institutions_InstitutionId",
-                        column: x => x.InstitutionId,
-                        principalTable: "Institutions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Follows",
+                name: "FollowForms",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FollowerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CourseId = table.Column<int>(type: "int", nullable: false),
                     FormId = table.Column<int>(type: "int", nullable: false),
-                    InstitutionId = table.Column<int>(type: "int", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Follows", x => x.Id);
+                    table.PrimaryKey("PK_FollowForms", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Follows_AspNetUsers_FollowerId",
+                        name: "FK_FollowForms_AspNetUsers_FollowerId",
                         column: x => x.FollowerId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Follows_Courses_CourseId",
-                        column: x => x.CourseId,
-                        principalTable: "Courses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Follows_Forms_FormId",
+                        name: "FK_FollowForms_Forms_FormId",
                         column: x => x.FormId,
                         principalTable: "Forms",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Follows_Institutions_InstitutionId",
-                        column: x => x.InstitutionId,
-                        principalTable: "Institutions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
@@ -358,34 +392,39 @@ namespace PublicAPI.Migrations
                 column: "InstitutionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Follows_CourseId",
-                table: "Follows",
+                name: "IX_FollowCourses_CourseId",
+                table: "FollowCourses",
                 column: "CourseId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Follows_FollowerId",
-                table: "Follows",
+                name: "IX_FollowCourses_FollowerId",
+                table: "FollowCourses",
                 column: "FollowerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Follows_FormId",
-                table: "Follows",
+                name: "IX_FollowForms_FollowerId",
+                table: "FollowForms",
+                column: "FollowerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FollowForms_FormId",
+                table: "FollowForms",
                 column: "FormId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Follows_InstitutionId",
-                table: "Follows",
+                name: "IX_FollowInstitutions_FollowerId",
+                table: "FollowInstitutions",
+                column: "FollowerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FollowInstitutions_InstitutionId",
+                table: "FollowInstitutions",
                 column: "InstitutionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Forms_CourseId",
                 table: "Forms",
                 column: "CourseId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Forms_InstitutionId",
-                table: "Forms",
-                column: "InstitutionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Institutions_AdminId",
@@ -412,7 +451,13 @@ namespace PublicAPI.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Follows");
+                name: "FollowCourses");
+
+            migrationBuilder.DropTable(
+                name: "FollowForms");
+
+            migrationBuilder.DropTable(
+                name: "FollowInstitutions");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
