@@ -15,35 +15,77 @@ namespace PublicAPI.Services
             _context = context;
         }
 
+       
+
         public async Task<(bool Success, List<string>? Errors)> AddFollowerAsync(FollowDTO followDto)
         {
-            int count = 0;
-            if (followDto.CourseId.HasValue) count++;
-            if (followDto.FormId.HasValue) count++;
-            if (followDto.InstitutionId.HasValue) count++;
-            if (count != 1)
+            switch (followDto.TargetType)
             {
-                return (false, new List<string> { "Exactly one of CourseId, FormId, or InstitutionId must be provided." });
+                case FollowTargetType.Institution:
+                    var followInstitution = new FollowInstitution
+                    {
+                        FollowerId = followDto.FollowerId,
+                        InstitutionId = followDto.TargetId
+                    };
+                    _context.FollowInstitutions.Add(followInstitution);
+                    break;
+                case FollowTargetType.Course:
+                    var followCourse = new FollowCourse
+                    {
+                        FollowerId = followDto.FollowerId,
+                        CourseId = followDto.TargetId
+                    };
+                    _context.FollowCourses.Add(followCourse);
+                    break;
+                case FollowTargetType.Form:
+                    var followForm = new FollowForm
+                    {
+                        FollowerId = followDto.FollowerId,
+                        FormId = followDto.TargetId
+                    };
+                    _context.FollowForms.Add(followForm);
+                    break;
+                default:
+                    return (false, new List<string> { "Invalid target type." });
             }
-            var FollowDTO = new follow
-            {
-                FollowerId = followDto.FollowerId,
-                CourseId = followDto.CourseId,
-                FormId = followDto.FormId,
-                InstitutionId = followDto.InstitutionId,
-            };
-            _context.Follows.Add(FollowDTO);
             await _context.SaveChangesAsync();
             return (true, null);
         }
-        public async Task<(bool success, List<string>? Errors)> RemoveFollowerCourseAsync(int courseId, string userId)
+        public async Task<(bool success, List<string>? Errors)> RemoveFollowAsync(FollowDTO followerDto)
         {
-            var followRecord = await _context.Follows.FirstOrDefaultAsync(f => f.FollowerId == userId && f.CourseId == courseId);
-            if (followRecord == null)
+            switch (followerDto.TargetType)
             {
-                return (false, new List<string> { "Follow record not found." });
+                case FollowTargetType.Institution:
+                    var followInstitution = await _context.FollowInstitutions
+                        .FirstOrDefaultAsync(f => f.FollowerId == followerDto.FollowerId && f.InstitutionId == followerDto.TargetId);
+                    if (followInstitution == null)
+                    {
+                        return (false, new List<string> { "Follow record not found." });
+                    }
+                    _context.FollowInstitutions.Remove(followInstitution);
+                    break;
+                case FollowTargetType.Course:
+                    var followCourse = await _context.FollowCourses
+                        .FirstOrDefaultAsync(f => f.FollowerId == followerDto.FollowerId && f.CourseId == followerDto.TargetId);
+                    if (followCourse == null)
+                    {
+                        return (false, new List<string> { "Follow record not found." });
+                    }
+                    _context.FollowCourses.Remove(followCourse);
+                    break;
+                case FollowTargetType.Form:
+                    var followForm = await _context.FollowForms
+                        .FirstOrDefaultAsync(f => f.FollowerId == followerDto.FollowerId && f.FormId == followerDto.TargetId);
+                    if (followForm == null)
+                    {
+                        return (false, new List<string> { "Follow record not found." });
+                    }
+                    _context.FollowForms.Remove(followForm);
+                    break;
+                default:
+                    return (false, new List<string> { "Invalid target type." });
             }
-            _context.Follows.Remove(followRecord);
+            
             await _context.SaveChangesAsync();
             return (true, null);
 
@@ -51,18 +93,28 @@ namespace PublicAPI.Services
         
         public async Task<(bool Success, List<string>? Errors, IEnumerable<FollowDTO>? dtos)> GetAllFollowsOfUserAsync(string userId)
         {
-            var follows = await _context.Follows
+            var courses = await _context.FollowCourses
+                .Where(f => f.FollowerId == userId)
+                .ToListAsync();
+            var institutions = await _context.FollowInstitutions
+                .Where(f => f.FollowerId == userId)
+                .ToListAsync();
+            var forms = await _context.FollowForms
                 .Where(f => f.FollowerId == userId)
                 .ToListAsync();
 
-            if (follows == null || !follows.Any())
-            {
-                return (false, new List<string> { "No follows found for the user." }, null);
-            }
+            var courseDtos = courses.Select(f => f.ToDto());
+            
+            var institutionDtos = institutions.Select(f => f.ToDto());
 
-            var followDtos = follows.Select(f => f.ToDto()).ToList();
+            var formDtos = forms.Select(f => f.ToDto());
 
-            return (true, null, followDtos);
+            var data = courseDtos
+                .Concat(institutionDtos)
+                .Concat(formDtos)
+                .ToList();
+
+            return (true, null, data);
         }
     }
 }

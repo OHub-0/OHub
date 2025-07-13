@@ -1,5 +1,6 @@
 ﻿using PublicAPI.DTO;
 using PublicAPI.Model;
+using PublicAPI.Services.Interfaces;
 
 namespace PublicAPI.Services
 {
@@ -76,14 +77,14 @@ namespace PublicAPI.Services
             };
         }
 
-        public static FollowDTO ToDto(this follow f)
+        public static FollowDTO ToDto(this IFollowMapper f)
         {
             return new FollowDTO
             {
                 FollowerId = f.FollowerId,
-                CourseId = f.CourseId,
-                FormId = f.FormId,
-                InstitutionId = f.InstitutionId
+                TargetId = (byte)f.TargetId,
+                TargetType = f.TargetType
+                
             };
         }
     }
