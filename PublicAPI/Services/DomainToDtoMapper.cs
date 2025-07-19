@@ -57,6 +57,20 @@ namespace PublicAPI.Services
             form.OpenUntil = formdto.OpenUntil;
 
         }
+
+        public static void UpdateFromDto(this UserModel user, UpdateUserDTO userdto)
+        {
+            if (!string.IsNullOrEmpty(userdto.FirstName)) user.FirstName = userdto.FirstName;
+            if (!string.IsNullOrEmpty(userdto.MiddleName)) user.MiddleName = userdto.MiddleName;
+            if (!string.IsNullOrEmpty(userdto.LastName)) user.LastName = userdto.LastName;
+            if (!string.IsNullOrEmpty(userdto.PhoneNumber)) user.PhoneNumber = userdto.PhoneNumber;
+            if (!string.IsNullOrEmpty(userdto.Email)) user.Email = userdto.Email;
+            if (userdto.Email != null) user.Email = userdto.Email;
+            if (!string.IsNullOrEmpty(userdto.Country)) user.Country = userdto.Country;
+            if (!string.IsNullOrEmpty(userdto.City)) user.City = userdto.City;
+            if (!string.IsNullOrEmpty(userdto.Address)) user.Address = userdto.Address;
+            if (userdto.DateofBirth != null) user.DateofBirth = userdto.DateofBirth;
+        }
         public static CreateInstitutionDTO ToDto(this Institution institution)
         {
             return new CreateInstitutionDTO
