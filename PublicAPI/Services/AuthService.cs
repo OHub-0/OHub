@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Primitives;
 using Microsoft.EntityFrameworkCore;
 using PublicAPI.Model;
+using PublicAPI.Data;
 
 namespace PublicAPI.Services
 {
@@ -22,7 +23,8 @@ namespace PublicAPI.Services
         private readonly IEmailService _emailService;
         private readonly IUrlHelper _urlHelper;
         private readonly IConfiguration _configuration;
-        public AuthService(UserManager<UserModel> userManager, RoleManager<IdentityRole> roleManager, IEmailService emailService, IUrlHelperFactory urlHelperFactory, IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+        private readonly ApplicationDbContext _context;
+        public AuthService(UserManager<UserModel> userManager, RoleManager<IdentityRole> roleManager, IEmailService emailService, IUrlHelperFactory urlHelperFactory, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, ApplicationDbContext context)
         {
             this._userManager = userManager;
             this._roleManager = roleManager;
@@ -34,6 +36,7 @@ namespace PublicAPI.Services
                 ActionDescriptor = new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor()
             });
             this._configuration = configuration;
+            this._context = context;
         }
 
         public async Task<(bool Success, List<string> Errors)> RegisterUserAsync(RegisterUserDTO registerUser, string role)
@@ -134,6 +137,36 @@ namespace PublicAPI.Services
                 return (false, errors);
             }
         }
+
+        public async Task<(bool Success, IEnumerable<IdentityError>? Errors)> DeleteUserAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);;
+            if (user == null) { return (false, new IdentityError[] { new IdentityError { Code = "UserNotFound", Description = "User Could not be found" } }); }
+
+            // delete institution which has this user as admin
+            var institutions = await _context.Institutions.Where(i => i.AdminId == userId).ToListAsync();
+            _context.Institutions.RemoveRange(institutions);
+            await _context.SaveChangesAsync();
+            // delete user
+            var result = await _userManager.DeleteAsync(user);
+
+            if (!result.Succeeded)
+            {
+                return (false, result.Errors);
+            }
+            return (true, null);
+
+        }
+
+        public async Task<(bool Success, IEnumerable<IdentityError>? Errors)> UpdateUserAsync(UpdateUserDTO userdto)
+        {
+            var user = await _userManager.FindByIdAsync(userdto.Id);
+            user.UpdateFromDto(userdto);
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded) { return (false, result.Errors); }
+            return (true, null);
+        }
+
         private JwtSecurityToken GenerateJwtToken(UserModel user, List<Claim> authClaims)
         {
             var authSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
@@ -148,7 +181,6 @@ namespace PublicAPI.Services
 
             return token;
         }
-
     }
 }
 
