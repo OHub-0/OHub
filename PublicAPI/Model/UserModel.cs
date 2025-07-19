@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using PublicAPI.Services.Interfaces;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PublicAPI.Model
 {
@@ -14,6 +15,9 @@ namespace PublicAPI.Model
 
         [Required, MaxLength(100)]
         public string? LastName { get; set; }
+
+        [NotMapped]
+        public string FullName => string.Join(" ", new[] { FirstName, MiddleName, LastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
 
         public DateTime? DateofBirth   { get; set; }
       
